@@ -1,0 +1,21 @@
+{
+  "name": "Happy Beat CL",
+  "short_name": "HappyBeat",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#05140b",
+  "theme_color": "#11d442",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
