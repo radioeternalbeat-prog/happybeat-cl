@@ -21,7 +21,7 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Color+Emoji&display=swap"
         rel="stylesheet">
     <!-- Tailwind CSS v4 CDN -->
     <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
@@ -34,7 +34,7 @@
             --color-mint-500: #11d442;
             --color-beatcoin: #f4d125;
             
-            --font-jakarta: 'Plus Jakarta Sans', sans-serif;
+            --font-jakarta: 'Plus Jakarta Sans', 'Noto Color Emoji', sans-serif;
             
             --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
@@ -2071,7 +2071,8 @@
                     id: 'r1',
                     name: 'Audífonos Bio-Fiber',
                     cost: 15000,
-                    img: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=200&auto=format&fit=crop',
+                    icon: '🎧',
+                    color: 'from-blue-500/20 to-blue-600/5',
                     cat: 'Hardware',
                     desc: 'Materiales 100% reciclados y sonido de alta fidelidad.'
                 },
@@ -2079,7 +2080,8 @@
                     id: 'r2',
                     name: 'Membresía Spotify Duo',
                     cost: 8000,
-                    img: 'https://images.unsplash.com/photo-1614680376593-902f74cf0d41?q=80&w=200&auto=format&fit=crop',
+                    icon: '🎵',
+                    color: 'from-purple-500/20 to-purple-600/5',
                     cat: 'Entretenimiento',
                     desc: '2 meses de música sin comerciales.'
                 },
@@ -2087,17 +2089,19 @@
                     id: 'r3',
                     name: 'Botella Térmica Eco',
                     cost: 5000,
-                    img: 'https://images.unsplash.com/photo-1602143307185-84e05b475223?q=80&w=200&auto=format&fit=crop',
+                    icon: '♻️',
+                    color: 'from-cyan-500/20 to-cyan-600/5',
                     cat: 'Accesorios',
                     desc: 'Mantiene el frío 24h. Acero inoxidable reciclable.'
                 },
                 {
                     id: 'r4',
-                    name: 'Pack 10 Árboles Nativos',
+                    name: 'Planta Nativa para tu Jardín',
                     cost: 3000,
-                    img: 'https://images.unsplash.com/photo-1542601906990-b4d3fb773b09?q=80&w=200&auto=format&fit=crop',
+                    icon: '🌱',
+                    color: 'from-mint-500/20 to-mint-600/5',
                     cat: 'Impacto',
-                    desc: 'Plantamos 10 especies nativas en el sur de Chile.'
+                    desc: 'Recibe una planta nativa real para que la siembres en tu jardín o en un parque cercano.'
                 },
             ];
 
@@ -2217,9 +2221,8 @@
                         <div className="grid grid-cols-1 gap-4">
                             {items.map(item => (
                                 <div key={item.id} className="glass-card p-4 flex space-x-4 border-white/5 hover:border-mint-500/30 transition-all group overflow-hidden">
-                                    <div className="w-28 h-28 flex-shrink-0 bg-forest-950 rounded-xl overflow-hidden relative border border-white/5">
-                                        <img src={item.img} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={item.name} />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-forest-950/80 to-transparent"></div>
+                                    <div className={`w-28 h-28 flex-shrink-0 bg-gradient-to-br ${item.color} rounded-xl overflow-hidden relative border border-white/5 flex items-center justify-center`}>
+                                        <span className="text-5xl group-hover:scale-110 transition-transform duration-500">{item.icon}</span>
                                     </div>
                                     <div className="flex-1 flex flex-col justify-between">
                                         <div>
