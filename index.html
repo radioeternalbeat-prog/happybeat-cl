@@ -1259,7 +1259,7 @@
         };
 
         const SyncHub = ({ user, onUpdateUser }) => {
-            const { toast } = useToast();
+            const toast = useToast();
             const [activeSection, setActiveSection] = useState('devices');
             const [mode, setMode] = useState('none');
             const [scanning, setScanning] = useState(false);
@@ -1946,7 +1946,7 @@
         };
 
         // --- COMMUNITY COMPONENT ---
-        const Community = ({ user, onUpdateUser }) => {
+        const Community = ({ user, onUpdateUser, setActiveTab }) => {
             const addToast = useToast();
             const [activeSubTab, setActiveSubTab] = useState('retos'); // retos, ranking, amigos
 
@@ -1981,9 +1981,16 @@
             return (
                 <div className="animate-in fade-in duration-500 space-y-6 pb-32">
                     <div className="flex justify-between items-center px-2">
-                        <div>
-                            <h1 className="text-2xl font-bold">Comunidad</h1>
-                            <p className="text-gray-400 text-sm">Crece junto a tus amigos</p>
+                        <div className="flex items-center space-x-3">
+                            {setActiveTab && (
+                                <button onClick={() => setActiveTab('home')} className="p-2 -ml-2 bg-white/5 hover:bg-white/10 rounded-xl transition-colors">
+                                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
+                                </button>
+                            )}
+                            <div>
+                                <h1 className="text-2xl font-bold">Comunidad</h1>
+                                <p className="text-gray-400 text-sm">Crece junto a tus amigos</p>
+                            </div>
                         </div>
                     </div>
 
@@ -3238,6 +3245,7 @@
                             {activeTab === 'company' && <CompanyProfile user={user} onUpdateUser={setUser} setActiveTab={setActiveTab} />}
                             {activeTab === 'business' && <BusinessPortal user={user} onUpdateUser={setUser} />}
                             {activeTab === 'social' && <SocialFeed user={user} />}
+                            {activeTab === 'challenges' && <Community user={user} onUpdateUser={setUser} setActiveTab={setActiveTab} />}
                             {activeTab === 'admin' && <AdminPanel />}
                             {activeTab === 'profile' && <Profile user={user} onUpdateUser={setUser} onLogout={handleLogout} setActiveTab={setActiveTab} />}
 
