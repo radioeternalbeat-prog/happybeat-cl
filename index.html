@@ -990,10 +990,50 @@
             return false;
         };
 
+        // Categorias reales del US AQI (EPA), usadas para interpretar el
+        // dato real de calidad del aire de Open-Meteo.
+        // Referencia: https://www.airnow.gov/aqi/aqi-basics/
+        const getAqiInfo = (aqi) => {
+            if (aqi <= 50) return { label: 'Buena', color: 'mint', emoji: '🌿', tip: '¡Excelente día para moverte al aire libre!' };
+            if (aqi <= 100) return { label: 'Moderada', color: 'yellow', emoji: '🙂', tip: 'Calidad aceptable, sigue moviéndote sostenible.' };
+            if (aqi <= 150) return { label: 'Regular', color: 'orange', emoji: '😐', tip: 'Grupos sensibles deben tener precaución.' };
+            if (aqi <= 200) return { label: 'Mala', color: 'orange', emoji: '😷', tip: 'El aire está pesado. ¡Usa transporte limpio hoy!' };
+            if (aqi <= 300) return { label: 'Muy Mala', color: 'red', emoji: '🚨', tip: 'Evita exponerte innecesariamente al aire libre.' };
+            return { label: 'Peligrosa', color: 'red', emoji: '🚨', tip: 'Condición crítica. Evita actividades al aire libre.' };
+        };
+
         const Dashboard = ({ setActiveTab }) => {
             const user = React.useContext(UserContext);
             const addToast = useToast();
             const unlockedBadges = BADGES.filter(b => b.check(user));
+            const [airQuality, setAirQuality] = useState({ status: 'idle', aqi: null, city: null }); // idle | loading | ready | error
+
+            const fetchAirQuality = (lat, lon) => {
+                setAirQuality({ status: 'loading', aqi: null, city: null });
+                fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=us_aqi`)
+                    .then(res => res.json())
+                    .then(data => {
+                        const aqi = data?.current?.us_aqi;
+                        if (typeof aqi === 'number') {
+                            setAirQuality({ status: 'ready', aqi, city: null });
+                        } else {
+                            setAirQuality({ status: 'error', aqi: null, city: null });
+                        }
+                    })
+                    .catch(() => setAirQuality({ status: 'error', aqi: null, city: null }));
+            };
+
+            useEffect(() => {
+                if (!('geolocation' in navigator)) {
+                    setAirQuality({ status: 'error', aqi: null, city: null });
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => fetchAirQuality(pos.coords.latitude, pos.coords.longitude),
+                    () => setAirQuality({ status: 'error', aqi: null, city: null }),
+                    { timeout: 8000, maximumAge: 10 * 60 * 1000 }
+                );
+            }, []);
 
             const handleShare = async () => {
                 const copied = await shareAchievement(user);
@@ -1025,21 +1065,48 @@
                         </div>
                     </div>
 
-                    {/* Air Quality Alert Section */}
+                    {/* Air Quality Alert Section (datos reales via Open-Meteo, segun GPS) */}
                     <div className="mx-2 fade-in animate-in slide-in-from-right duration-1000">
-                        <div className="glass-card p-4 border border-orange-500/20 bg-orange-500/5 flex items-center space-x-4 relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/5 blur-3xl rounded-full translate-x-12 -translate-y-12"></div>
-                            <div className="w-12 h-12 bg-orange-500/20 rounded-2xl flex items-center justify-center text-2xl shadow-inner group-hover:scale-110 transition-transform">😷</div>
-                            <div className="flex-1">
-                                <div className="flex items-center space-x-2">
-                                    <span className="text-[9px] font-black bg-orange-500 text-white px-2 py-0.5 rounded-full uppercase tracking-tighter shadow-sm animate-pulse">Alerta Santiago</span>
-                                    <span className="text-[10px] text-orange-400 font-bold">Calidad: Regular</span>
-                                </div>
-                                <p className="text-white text-xs font-bold mt-1 tracking-tight">El aire está pesado en la capital hoy.</p>
-                                <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">🔋 ¡Usa tu HappyBeat para ayudar a limpiar la ciudad! <span className="text-mint-400 font-black">+20% Beatcoins hoy.</span></p>
+                        {airQuality.status === 'loading' && (
+                            <div className="glass-card p-4 border border-white/5 flex items-center space-x-4">
+                                <div className="w-4 h-4 border-2 border-mint-400/30 border-t-mint-400 rounded-full animate-spin flex-shrink-0"></div>
+                                <p className="text-xs text-gray-400">Consultando calidad del aire en tu ubicación...</p>
                             </div>
-                            <svg className="w-5 h-5 text-orange-400/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
-                        </div>
+                        )}
+
+                        {airQuality.status === 'error' && (
+                            <div className="glass-card p-4 border border-white/5 flex items-center space-x-4">
+                                <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">🌍</div>
+                                <div className="flex-1">
+                                    <p className="text-white text-xs font-bold">Calidad del aire no disponible</p>
+                                    <p className="text-[10px] text-gray-400 mt-0.5">Activa la ubicación de tu navegador para ver el dato real de tu zona.</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {airQuality.status === 'ready' && (() => {
+                            const info = getAqiInfo(airQuality.aqi);
+                            const colorClasses = {
+                                mint: { border: 'border-mint-500/20', bg: 'bg-mint-500/5', badge: 'bg-mint-500', text: 'text-mint-400' },
+                                yellow: { border: 'border-yellow-500/20', bg: 'bg-yellow-500/5', badge: 'bg-yellow-500', text: 'text-yellow-400' },
+                                orange: { border: 'border-orange-500/20', bg: 'bg-orange-500/5', badge: 'bg-orange-500', text: 'text-orange-400' },
+                                red: { border: 'border-red-500/20', bg: 'bg-red-500/5', badge: 'bg-red-500', text: 'text-red-400' },
+                            }[info.color];
+                            return (
+                                <div className={`glass-card p-4 border ${colorClasses.border} ${colorClasses.bg} flex items-center space-x-4 relative overflow-hidden group`}>
+                                    <div className={`absolute top-0 right-0 w-24 h-24 ${colorClasses.bg} blur-3xl rounded-full translate-x-12 -translate-y-12`}></div>
+                                    <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-2xl shadow-inner group-hover:scale-110 transition-transform flex-shrink-0">{info.emoji}</div>
+                                    <div className="flex-1">
+                                        <div className="flex items-center space-x-2">
+                                            <span className={`text-[9px] font-black ${colorClasses.badge} text-white px-2 py-0.5 rounded-full uppercase tracking-tighter shadow-sm`}>AQI {airQuality.aqi}</span>
+                                            <span className={`text-[10px] ${colorClasses.text} font-bold`}>Calidad: {info.label}</span>
+                                        </div>
+                                        <p className="text-white text-xs font-bold mt-1 tracking-tight">{info.tip}</p>
+                                        <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">📍 Basado en tu ubicación en tiempo real (Open-Meteo)</p>
+                                    </div>
+                                </div>
+                            );
+                        })()}
                     </div>
 
                     <MusicPlayer />
