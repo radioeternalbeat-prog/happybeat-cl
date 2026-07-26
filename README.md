@@ -35,9 +35,10 @@ Esto significa:
 
 - **Autenticación**: login/registro de usuarios con email y contraseña, y login real con **Google** (Firebase Auth, `signInWithPopup` + `GoogleAuthProvider`), más fallback local con `localStorage`. El botón de "Apple" se eliminó: no está configurado como proveedor en Firebase Authentication (requiere cuenta de Apple Developer de pago).
 - **Dashboard** principal con estadísticas.
-- **Eco-Mapa**: puntos sostenibles cercanos (puntos limpios, ciclovías, estaciones de carga EV).
+- **Eco-Mapa**: mapa real (Geoapify) centrado en el GPS del usuario, con búsqueda en vivo de puntos reales de reciclaje, carga EV y bicicletas/parking (OpenStreetMap vía Geoapify Places API) en un radio de 3km.
 - **Tracker**: registro de actividades sostenibles.
-- **Sync Hub / Rewards**: sistema de puntos ("Beatcoins") y canje de recompensas.
+- **Sync Hub**: escáner de código QR **real** (usa la cámara del dispositivo vía `html5-qrcode`) para conectar estaciones/bicicletas físicas de Happy Beat, y verificación de identidad con revisión manual por un administrador (sin IA falsa). El Bluetooth simulado y los toggles de apps de salud (Apple Health, Google Fit, Strava, etc.) se removieron: requerirían un backend propio para manejar credenciales OAuth de forma segura, algo fuera de alcance para un HTML estático sin servidor.
+- **Rewards**: sistema de puntos ("Beatcoins") y canje de recompensas.
 - **Perfil de Empresa / Portal de Negocios**: para cuentas tipo `business`.
 - **Feed Social** de la comunidad.
 - **Panel de Administración** (rol `admin`).
@@ -96,6 +97,8 @@ Con esta regla, cada usuario autenticado solo puede leer/escribir su propio docu
 - [ ] Restringir la API key de Geoapify por dominio en su dashboard (recomendado, no bloqueante).
 - [x] Convertir los "Puntos Cercanos" de datos fijos a datos reales: al activar el GPS, la app consulta la Places API de Geoapify (categorías `service.recycling`, `service.vehicle.charging_station`, `rental.bicycle`/`parking.bicycles`) en un radio de 3km alrededor del usuario, y muestra los resultados reales ordenados por distancia. Si no encuentra nada cercano, muestra los ejemplos originales como respaldo.
 - [ ] Definir mejoras/modificaciones puntuales a implementar.
+- [ ] Revisar las reglas de Firestore para permitir que un admin autenticado apruebe/modifique documentos de otros usuarios (hoy la regla solo permite que cada usuario edite su propio documento; las aprobaciones desde el Panel de Admin —identidad, certificaciones B2B— solo persisten en `localStorage`, no en Firestore).
+- [ ] Sync Hub honesto: el escaneo de wearables por Bluetooth y la integración con apps de salud (Apple Health, Google Fit, Strava, Garmin, Polar, WHOOP) requieren un backend propio para manejar credenciales OAuth de forma segura; están fuera de alcance mientras el proyecto sea un HTML estático sin servidor.
 
 ---
 
