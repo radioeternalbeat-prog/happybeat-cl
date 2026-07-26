@@ -31,6 +31,17 @@ Esto significa:
 └── icon-512.png       # Ícono PWA 512x512
 ```
 
+## 🏢 Plan de Mitigación para Empresas (B2B)
+
+El Portal de Empresas fue rediseñado como un proceso real de consultoría en 4 etapas, coordinado por HappyBeatCL ONG, en lugar de una "certificación automática" instantánea:
+
+1. **Solicitud** — la empresa solicita un Plan de Mitigación desde la app.
+2. **Asignación** — el equipo (desde el Panel de Admin) asigna un profesional titulado del área ambiental como representante del caso.
+3. **Ejecución** — el profesional y la empresa fijan metas conjuntas; se registran datos de consumo referenciales (energía, flota, residuos) para preparar el informe final.
+4. **Certificación** — al cierre del proceso, el Admin certifica oficialmente, y la empresa recibe un certificado con el nombre del representante real, amparado en la personalidad jurídica de HappyBeatCL ONG.
+
+No existe validación automática ni "IA algorítmica": cada caso es revisado por personas reales. Los valores del acompañamiento se manejan bajo un modelo de donación conversado directamente con el profesional asignado (coordinación por WhatsApp: `wa.me/56939010237`, o correo `beathappycl@gmail.com`).
+
 ## ✨ Funcionalidades principales (detectadas en el código)
 
 - **Autenticación**: login/registro de usuarios con email y contraseña, y login real con **Google** (Firebase Auth, `signInWithPopup` + `GoogleAuthProvider`), más fallback local con `localStorage`. El botón de "Apple" se eliminó: no está configurado como proveedor en Firebase Authentication (requiere cuenta de Apple Developer de pago).
@@ -104,6 +115,7 @@ Con esta regla, cada usuario autenticado solo puede leer/escribir su propio docu
 - [x] Sistema real de invitación de amigos (código de referido + bono de Beatcoins + WhatsApp) en Community → Amigos.
 - [x] Fix "Compartir Impacto": el link compartido apuntaba a un dominio inexistente (`happybeat.cl`) y ahora usa la URL real de producción; se agregó aviso al usuario si falla tanto el compartir nativo como copiar al portapapeles.
 - [x] Feed Social (Comunidad) real: consulta Firestore para mostrar actividades de todos los usuarios reales, likes reales persistentes (colección `postLikes`), y estadística real de CO2 comunitario. **Requiere publicar `firestore.rules` actualizado en la consola de Firebase** (lectura de `/users` para cualquier autenticado).
+- [x] Portal de Empresas rediseñado como proceso real de consultoría (Solicitud → Asignación → Ejecución → Certificación), reemplazando la "certificación ESG automática" simulada y el pago desconectado de la certificación.
 - [ ] Definir mejoras/modificaciones puntuales a implementar.
 - [ ] Revisar las reglas de Firestore para permitir que un admin autenticado apruebe/modifique documentos de otros usuarios (hoy la regla solo permite que cada usuario edite su propio documento; las aprobaciones desde el Panel de Admin —identidad, certificaciones B2B— solo persisten en `localStorage`, no en Firestore).
 - [ ] Sync Hub honesto: el escaneo de wearables por Bluetooth y la integración con apps de salud (Apple Health, Google Fit, Strava, Garmin, Polar, WHOOP) requieren un backend propio para manejar credenciales OAuth de forma segura; están fuera de alcance mientras el proyecto sea un HTML estático sin servidor.

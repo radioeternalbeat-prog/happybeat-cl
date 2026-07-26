@@ -3015,71 +3015,124 @@
 
                     <div className="glass-card overflow-hidden">
                         <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
-                            <h3 className="font-bold text-sm tracking-widest uppercase text-beatcoin">Certificaciones B2B</h3>
-                            <span className="bg-beatcoin/20 text-beatcoin text-[10px] font-black px-2 py-1 rounded-full">{users.filter(u => u.companyProfile?.companyName).length} EMPRESAS</span>
+                            <h3 className="font-bold text-sm tracking-widest uppercase text-beatcoin">Planes de Mitigación (Empresas)</h3>
+                            <span className="bg-beatcoin/20 text-beatcoin text-[10px] font-black px-2 py-1 rounded-full">{users.filter(u => u.mitigationPlan).length} CASOS</span>
                         </div>
-                        <div className="divide-y divide-white/5 max-h-[400px] overflow-y-auto">
-                            {users.filter(u => u.companyProfile?.companyName).map(u => {
-                                const isCertified = u.businessData?.certified || u.companyProfile?.certified;
-                                const energy = u.businessData?.data?.energy || 0;
-                                const fleet = u.businessData?.data?.fleet || 0;
-                                const waste = u.businessData?.data?.waste || 0;
-                                const total = (energy * 0.45 + fleet * 2.3 + waste * 0.15).toFixed(1);
-                                
+                        <div className="divide-y divide-white/5 max-h-[600px] overflow-y-auto">
+                            {users.filter(u => u.mitigationPlan).map(u => {
+                                const p = u.mitigationPlan;
+                                const statusLabel = { requested: 'Solicitud', assigned: 'Asignado', in_progress: 'En Ejecución', completed: 'Certificado' }[p.status] || p.status;
+                                const statusColor = { requested: 'bg-yellow-500/20 text-yellow-400', assigned: 'bg-blue-500/20 text-blue-400', in_progress: 'bg-purple-500/20 text-purple-400', completed: 'bg-mint-500/20 text-mint-400' }[p.status] || 'bg-white/10 text-gray-400';
+
                                 return (
-                                    <div key={'b2b-' + u.id} className="p-6 flex items-center justify-between hover:bg-white/5 transition-colors">
-                                        <div className="flex items-center space-x-4">
-                                            <div className="w-10 h-10 rounded-xl bg-beatcoin/10 flex items-center justify-center border border-beatcoin/30">
-                                                <span className="text-xl">🏢</span>
-                                            </div>
-                                            <div>
-                                                <h4 className="font-bold text-sm">{u.companyProfile?.companyName}</h4>
-                                                <div className="flex items-center space-x-2 mt-1">
-                                                    <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded-full">{total} kg CO₂</span>
-                                                    {isCertified ? (
-                                                        <span className="text-[10px] bg-mint-500/20 text-mint-400 px-2 py-0.5 rounded-full flex items-center gap-1">
-                                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                                            Certificado
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-[10px] bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded-full flex items-center gap-1">
-                                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                                            Pendiente
-                                                        </span>
-                                                    )}
+                                    <div key={'b2b-' + u.id} className="p-6 space-y-3 hover:bg-white/5 transition-colors">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center space-x-4">
+                                                <div className="w-10 h-10 rounded-xl bg-beatcoin/10 flex items-center justify-center border border-beatcoin/30">
+                                                    <span className="text-xl">🏢</span>
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-sm">{u.companyProfile?.companyName || u.email}</h4>
+                                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-black uppercase inline-block mt-1 ${statusColor}`}>{statusLabel}</span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="text-right flex items-center space-x-2">
-                                            <button
-                                                onClick={() => {
-                                                    const updatedUser = { ...u };
-                                                    if (!updatedUser.businessData) updatedUser.businessData = {};
-                                                    
-                                                    const newStatus = !isCertified;
-                                                    updatedUser.businessData.certified = newStatus;
-                                                    if (!updatedUser.companyProfile) updatedUser.companyProfile = {};
-                                                    updatedUser.companyProfile.certified = newStatus;
-                                                    if(newStatus) {
-                                                        updatedUser.companyProfile.verificationHash = (Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)).toUpperCase();
-                                                    } else {
-                                                        updatedUser.companyProfile.verificationHash = null;
-                                                    }
-                                                    
-                                                    DB.updateUser(updatedUser);
-                                                    setUsers(DB.getUsers());
-                                                }}
-                                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${isCertified ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' : 'bg-mint-500/10 text-mint-500 hover:bg-mint-500/20'}`}
-                                            >
-                                                {isCertified ? 'Revocar' : 'Aprobar'}
-                                            </button>
-                                        </div>
+
+                                        {p.status === 'requested' && (
+                                            <div className="bg-white/5 rounded-xl p-3 space-y-2">
+                                                <p className="text-[9px] text-gray-500 uppercase font-black">Asignar profesional responsable</p>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <input id={`prof-name-${u.id}`} type="text" placeholder="Nombre completo" className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs" />
+                                                    <input id={`prof-title-${u.id}`} type="text" placeholder="Título (ej: Ing. Ambiental)" className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs" />
+                                                </div>
+                                                <button
+                                                    onClick={() => {
+                                                        const name = document.getElementById(`prof-name-${u.id}`).value.trim();
+                                                        const title = document.getElementById(`prof-title-${u.id}`).value.trim();
+                                                        if (!name || !title) { addToast('Completa nombre y título del profesional', 'error'); return; }
+                                                        const updatedUser = { ...u, mitigationPlan: { ...p, status: 'assigned', professional: { name, title }, assignedAt: new Date().toLocaleDateString('es-CL') } };
+                                                        DB.updateUser(updatedUser); setUsers(DB.getUsers());
+                                                        addToast(`Profesional asignado a ${u.companyProfile?.companyName || u.email}`, 'success');
+                                                    }}
+                                                    className="w-full py-2 bg-blue-500/20 text-blue-400 rounded-lg text-[10px] font-black uppercase hover:bg-blue-500/30 transition-colors"
+                                                >
+                                                    Asignar Profesional
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {p.status === 'assigned' && (
+                                            <div className="bg-white/5 rounded-xl p-3 space-y-2">
+                                                <p className="text-[10px] text-gray-400">Representante: <span className="text-white font-bold">{p.professional?.name}</span> ({p.professional?.title})</p>
+                                                <button
+                                                    onClick={() => {
+                                                        const updatedUser = { ...u, mitigationPlan: { ...p, status: 'in_progress', startedAt: new Date().toLocaleDateString('es-CL') } };
+                                                        DB.updateUser(updatedUser); setUsers(DB.getUsers());
+                                                        addToast('Plan marcado como en ejecución', 'success');
+                                                    }}
+                                                    className="w-full py-2 bg-purple-500/20 text-purple-400 rounded-lg text-[10px] font-black uppercase hover:bg-purple-500/30 transition-colors"
+                                                >
+                                                    Iniciar Ejecución del Plan
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {p.status === 'in_progress' && (
+                                            <div className="bg-white/5 rounded-xl p-3 space-y-3">
+                                                <p className="text-[10px] text-gray-400">Representante: <span className="text-white font-bold">{p.professional?.name}</span> ({p.professional?.title})</p>
+                                                <p className="text-[9px] text-gray-500 uppercase font-black">Metas fijadas ({(p.goals || []).length})</p>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <input id={`goal-title-${u.id}`} type="text" placeholder="Título de la meta" className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs" />
+                                                    <input id={`goal-desc-${u.id}`} type="text" placeholder="Descripción breve" className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs" />
+                                                </div>
+                                                <button
+                                                    onClick={() => {
+                                                        const title = document.getElementById(`goal-title-${u.id}`).value.trim();
+                                                        const description = document.getElementById(`goal-desc-${u.id}`).value.trim();
+                                                        if (!title) { addToast('Escribe un título para la meta', 'error'); return; }
+                                                        const newGoals = [...(p.goals || []), { title, description, done: false }];
+                                                        const updatedUser = { ...u, mitigationPlan: { ...p, goals: newGoals } };
+                                                        DB.updateUser(updatedUser); setUsers(DB.getUsers());
+                                                        addToast('Meta agregada al plan', 'success');
+                                                    }}
+                                                    className="w-full py-2 bg-white/10 text-white rounded-lg text-[10px] font-black uppercase hover:bg-white/20 transition-colors"
+                                                >
+                                                    + Agregar Meta
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        const updatedUser = { ...u, mitigationPlan: { ...p, status: 'completed', certifiedAt: new Date().toLocaleDateString('es-CL') } };
+                                                        DB.updateUser(updatedUser); setUsers(DB.getUsers());
+                                                        addToast(`¡${u.companyProfile?.companyName || u.email} certificada!`, 'coin');
+                                                    }}
+                                                    className="w-full py-2 bg-mint-500/20 text-mint-400 rounded-lg text-[10px] font-black uppercase hover:bg-mint-500/30 transition-colors"
+                                                >
+                                                    🏆 Certificar Empresa (cierre del proceso)
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {p.status === 'completed' && (
+                                            <div className="bg-mint-500/5 border border-mint-500/20 rounded-xl p-3">
+                                                <p className="text-[10px] text-mint-400 font-bold">✓ Certificado el {p.certifiedAt} · Representante: {p.professional?.name}</p>
+                                                <button
+                                                    onClick={() => {
+                                                        const updatedUser = { ...u, mitigationPlan: { ...p, status: 'in_progress', certifiedAt: null } };
+                                                        DB.updateUser(updatedUser); setUsers(DB.getUsers());
+                                                        addToast('Certificación revocada, plan vuelve a ejecución', 'info');
+                                                    }}
+                                                    className="mt-2 text-[9px] font-black text-red-400 uppercase hover:text-red-300"
+                                                >
+                                                    Revocar certificación
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}
-                            {users.filter(u => u.companyProfile?.companyName).length === 0 && (
+                            {users.filter(u => u.mitigationPlan).length === 0 && (
                                 <div className="p-12 text-center">
-                                    <p className="text-gray-500 text-sm">No hay empresas registradas todavía.</p>
+                                    <p className="text-gray-500 text-sm">No hay solicitudes de Plan de Mitigación todavía.</p>
                                 </div>
                             )}
                         </div>
@@ -3141,8 +3194,9 @@
                 esgScore: 0,
             });
 
-            const isCertified = user?.businessData?.certified || profile.certified;
-            const businessData = user?.businessData?.data || { energy: 0, fleet: 0, waste: 0 };
+            const planStatus = user?.mitigationPlan?.status || 'none';
+            const isCertified = planStatus === 'completed';
+            const businessData = user?.mitigationPlan?.data || { energy: 0, fleet: 0, waste: 0 };
             const totalCO2 = (businessData.energy * 0.45 + businessData.fleet * 2.3 + businessData.waste * 0.15).toFixed(1);
 
             const handleSave = () => {
@@ -3401,24 +3455,32 @@
                         </div>
                     )}
 
-                    {/* Certification Status */}
+                    {/* Mitigation Plan Status */}
                     <div className={`glass-card p-5 border-l-4 ${isCertified ? 'border-mint-500 bg-mint-500/5' : 'border-blue-500 bg-blue-500/5'}`}>
                         <div className="flex items-start space-x-4">
                             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl ${isCertified ? 'bg-mint-500/20' : 'bg-blue-500/20'}`}>
-                                {isCertified ? '🏆' : '📊'}
+                                {isCertified ? '🏆' : planStatus === 'none' ? '📊' : '🤝'}
                             </div>
                             <div className="flex-1">
                                 <h4 className={`text-sm font-black uppercase tracking-widest ${isCertified ? 'text-mint-400' : 'text-blue-400'}`}>
-                                    {isCertified ? 'Certificación ESG Activa' : 'Certificación Pendiente'}
+                                    {{
+                                        none: 'Sin Plan de Mitigación',
+                                        requested: 'Solicitud Enviada',
+                                        assigned: 'Profesional Asignado',
+                                        in_progress: 'Plan en Ejecución',
+                                        completed: 'Certificación Vigente'
+                                    }[planStatus]}
                                 </h4>
                                 <p className="text-[10px] text-gray-400 mt-1 leading-relaxed">
                                     {isCertified
-                                        ? `Certificado bajo GHG Protocol. Total mitigado: ${totalCO2} kg CO2e. Válido para reportes corporativos y memorias ESG.`
-                                        : 'Accede al Portal Pro para certificar las emisiones de tu empresa bajo el estándar GHG Protocol (WRI/WBCSD).'
+                                        ? `Tu empresa cuenta con la certificación de HappyBeatCL ONG. Total mitigado durante el proceso: ${totalCO2} kg CO2e.`
+                                        : planStatus === 'none'
+                                        ? 'Solicita un Plan de Mitigación: un profesional titulado en medio ambiente de HappyBeatCL ONG trabajará contigo para fijar metas y certificar tus avances.'
+                                        : 'Sigue el avance de tu Plan de Mitigación en el Portal de Empresas.'
                                     }
                                 </p>
-                                {user?.businessData?.lastUpdate && (
-                                    <p className="text-[9px] text-gray-500 mt-1">Última actualización: {user.businessData.lastUpdate}</p>
+                                {user?.mitigationPlan?.certifiedAt && (
+                                    <p className="text-[9px] text-gray-500 mt-1">Certificado el: {user.mitigationPlan.certifiedAt}</p>
                                 )}
                             </div>
                         </div>
@@ -3428,7 +3490,7 @@
                     <button
                         onClick={() => {
                             if (completion < 50) {
-                                addToast('⚠️ Completa al menos 50% de tu perfil antes de certificar', 'info');
+                                addToast('⚠️ Completa al menos 50% de tu perfil antes de continuar', 'info');
                                 setIsEditing(true);
                             } else {
                                 setActiveTab('business');
@@ -3440,7 +3502,7 @@
                         }`}
                     >
                         <span className="text-xl">{isCertified ? '📋' : '🚀'}</span>
-                        <span>{isCertified ? 'Ver Portal de Certificación' : 'Iniciar Certificación ESG'}</span>
+                        <span>{planStatus === 'none' ? 'Solicitar Plan de Mitigación' : 'Ver mi Plan de Mitigación'}</span>
                     </button>
 
                     {/* Compliance Footer */}
@@ -3448,7 +3510,7 @@
                         <div className="w-8 h-8 bg-blue-500/10 rounded-xl flex items-center justify-center text-sm flex-shrink-0">🛡️</div>
                         <div>
                             <p className="text-[9px] text-gray-400 leading-relaxed">
-                                <span className="text-blue-400 font-bold">Happy Beat CL</span> utiliza el estándar <span className="text-white font-bold">GHG Protocol</span> (WRI/WBCSD) para el cálculo y reporte de emisiones corporativas. Los datos son procesados con factores de emisión IPCC AR5.
+                                <span className="text-blue-400 font-bold">HappyBeatCL ONG</span> acompaña a tu empresa con profesionales titulados del área ambiental, usando el marco de referencia <span className="text-white font-bold">GHG Protocol</span> (WRI/WBCSD) para el cálculo referencial de emisiones. La certificación final es emitida por HappyBeatCL ONG en base al proceso ejecutado en conjunto.
                             </p>
                         </div>
                     </div>
@@ -3456,321 +3518,271 @@
             );
         };
 
+        // Numero de WhatsApp y correo de contacto de HappyBeatCL ONG para
+        // coordinar Planes de Mitigacion con empresas (mismo canal que
+        // Rewards, pero usado aqui para el area de Empresas/ONG).
+        const ONG_WHATSAPP = '56939010237';
+        const ONG_EMAIL = 'beathappycl@gmail.com';
+        const ONG_LEGAL_NAME = 'HappyBeatCL ONG';
+
         const BusinessPortal = ({ user, onUpdateUser }) => {
             const addToast = useToast();
-            const [isVerifying, setIsVerifying] = useState(false);
-            const [certified, setCertified] = useState(user?.businessData?.certified || false);
-            const [data, setData] = useState(user?.businessData?.data || {
-                energy: 1200,
-                fleet: 450,
-                waste: 230
-            });
-
-            // Debounce ref for saving to DB
+            const plan = user?.mitigationPlan || null;
+            const status = plan?.status || 'none'; // none -> requested -> assigned -> in_progress -> completed
+            const [data, setData] = useState(plan?.data || { energy: 0, fleet: 0, waste: 0 });
             const saveTimeoutRef = React.useRef(null);
 
-            const handleVerify = (file) => {
-                if (!file) return;
-
-                // Security Validation: File format and size checks
-                const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
-                if (!allowedTypes.includes(file.type)) {
-                    addToast('Formato no soportado. Sube PDF, JPG o PNG.', 'error');
-                    return;
-                }
-                if (file.size > 10 * 1024 * 1024) {
-                    addToast('El archivo excede el máximo permitido (10MB).', 'error');
-                    return;
-                }
-
-                setIsVerifying(true);
-                
-                // Simulate deep AI algorithmic validation for ESG compliance
-                setTimeout(() => {
-                    setIsVerifying(false);
-                    setCertified(true);
-                    
-                    const verificationHash = Array.from(window.crypto.getRandomValues(new Uint8Array(16)))
-                        .map(b => b.toString(16).padStart(2, '0')).join('');
-                        
-                    const updatedUser = {
-                        ...user,
-                        businessData: {
-                            ...user?.businessData,
-                            data,
-                            certified: true,
-                            lastUpdate: new Date().toLocaleDateString('es-CL'),
-                            fileName: file.name,
-                            fileSize: (file.size / 1024 / 1024).toFixed(1) + ' MB',
-                            verificationHash
-                        }
-                    };
-                    
-                    DB.updateUser(updatedUser); // Push to backend
-                    onUpdateUser(updatedUser);
-                    addToast('¡Datos validados algorítmicamente! Certificado GHG Listo.', 'success');
-                }, 4000);
-            };
-
-            const downloadCertificate = () => {
-                const certId = `HB-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-                const encodedUrl = encodeURIComponent(`https://happybeat.cl/verify/${user?.companyProfile?.verificationHash || certId}`);
-                
-                const certHtml = `
-                    <!DOCTYPE html>
-                    <html lang="es">
-                    <head>
-                        <meta charset="UTF-8">
-                        <title>Certificado ESG - Happy Beat CL</title>
-                        <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
-                        <style>
-                            body { margin: 0; padding: 0; background: #05140b; color: #fff; font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-                            .cert-container { width: 800px; padding: 60px; border: 2px solid rgba(17, 212, 66, 0.3); background: #0a1f12; position: relative; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.5); }
-                            .cert-container::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(17,212,66,0.05) 0%, transparent 70%); pointer-events: none; }
-                            .logo { font-family: 'Orbitron', sans-serif; font-size: 32px; font-weight: 900; color: #11d442; letter-spacing: -2px; margin-bottom: 20px; }
-                            h1 { font-size: 40px; font-weight: 900; text-transform: uppercase; letter-spacing: 5px; margin: 20px 0; color: #fff; }
-                            .company { font-size: 32px; font-weight: 900; color: #11d442; margin: 20px 0; text-shadow: 0 0 20px rgba(17,212,66,0.3); }
-                            .ghg-box { border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); padding: 30px; border-radius: 20px; margin: 40px 0; text-align: left; }
-                            .ghg-item { display: flex; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; font-size: 14px; }
-                            .total { font-size: 36px; font-weight: 900; color: #fff; text-align: center; margin-top: 20px; border-top: 2px solid #11d442; pt: 15px; }
-                            .legal { font-size: 11px; color: #666; line-height: 1.6; margin-top: 40px; max-width: 600px; margin-left: auto; margin-right: auto; }
-                            .id { position: absolute; top: 30px; right: 30px; font-size: 10px; font-weight: 700; color: #333; font-family: monospace; }
-                            .seal { width: 100px; height: 100px; border: 2px solid #11d442; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; position: absolute; bottom: 60px; right: 60px; transform: rotate(-15deg); color: #11d442; font-size: 10px; font-weight: 900; opacity: 0.5; }
-                            .qr-code { position: absolute; bottom: 60px; right: 180px; width: 100px; height: 100px; padding: 5px; background: white; border-radius: 10px; border: 2px solid rgba(17,212,66,0.3); }
-                            @media print { 
-                                body { background: #fff !important; color: #000 !important; } 
-                                .cert-container { padding: 40px; border: 10px double #000 !important; background: #fff !important; box-shadow: none !important; color: #000 !important; } 
-                                .logo, h1, .company, .total, .ghg-item { color: #000 !important; border-color: #000 !important; }
-                                button { display: none !important; }
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="cert-container">
-                            <div class="id">HB-VERIFY-${certId}</div>
-                            <div class="logo">HAPPY BEAT CL</div>
-                            <p style="font-size: 12px; text-transform: uppercase; letter-spacing: 4px; color: #11d442; font-weight:900;">Global Sustainable Partner</p>
-                            <h1>CERTIFICADO ESG</h1>
-                            <p style="font-size: 16px; opacity: 0.8;">Por la presente se certifica y reconoce oficialmente a:</p>
-                            <div class="company">${user?.companyProfile?.companyName?.toUpperCase() || user?.name?.toUpperCase() || 'EMPRESA PARTNER'}</div>
-                            <p style="font-size: 14px; line-height: 1.6; opacity: 0.8;">
-                                Como organización comprometida con la descarbonización global, habiendo reportado y mitigado satisfactoriamente 
-                                su huella de carbono a través de la infraestructura de movilidad sostenible de Happy Beat CL.
-                            </p>
-                            
-                            <div class="ghg-box">
-                                <h3 style="margin-top:0; font-size: 12px; color: #11d442; text-transform: uppercase; letter-spacing: 2px;">Inventario GeI (GHG Protocol Standard)</h3>
-                                <div class="ghg-item"><span>ALCANCE 1 (Combustión Fija y Móvil)</span> <span>${(data.fleet * 2.3).toFixed(1)} kg CO2e</span></div>
-                                <div class="ghg-item"><span>ALCANCE 2 (Consumo de Electricidad)</span> <span>${(data.energy * 0.45).toFixed(1)} kg CO2e</span></div>
-                                <div class="ghg-item"><span>ALCANCE 3 (Cadena de Suministro)</span> <span>${(data.waste * 0.15).toFixed(1)} kg CO2e</span></div>
-                                <div class="total" style="font-size: 28px;">TOTAL VERIFICADO: ${(data.energy * 0.45 + data.fleet * 2.3 + data.waste * 0.15).toFixed(1)} kg CO2e</div>
-                            </div>
-
-                            <p class="legal">
-                                Metodología de Reporte: GHG Protocol Corporate Accounting and Reporting Standard (WRI/WBCSD). 
-                                Factores de emisión basados en IPCC AR5. Certificación válida para auditorías de cumplimiento ESG y memorias de sostenibilidad corporativa.
-                            </p>
-                            
-                            <div class="seal">
-                                <span>VERIFICADO</span>
-                                <span style="font-size: 14px;">HB-ESG</span>
-                                <span>2026</span>
-                            </div>
-
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodedUrl}" class="qr-code" alt="QR de Verificación">
-
-                            <div style="margin-top: 60px; display: flex; justify-content: center; gap: 80px;">
-                                <div style="text-align: center; border-top: 1px solid #333; width: 180px; padding-top: 10px; font-size: 10px; font-weight:700;">HAPPY BEAT CL BOARD<br>Auditores Autorizados</div>
-                                <div style="text-align: center; border-top: 1px solid #333; width: 180px; padding-top: 10px; font-size: 10px; font-weight:700;">SISTEMA INTELIGENTE VERA<br>Validación Algorítmica ESG</div>
-                            </div>
-                        </div>
-                        <button onclick="window.print()" style="position: fixed; bottom: 30px; right: 30px; background: #2563eb; color: #fff; border: none; padding: 20px 40px; border-radius: 50px; font-weight: 900; font-family: 'Orbitron', sans-serif; cursor: pointer; box-shadow: 0 10px 40px rgba(37,99,235,0.4); text-transform: uppercase; letter-spacing: 2px; transition: all 0.3s hover:scale(1.05);">📥 DESCARGAR / IMPRIMIR PDF</button>
-                    </body>
-                    </html>
-                `;
-                const win = window.open('', '_blank');
-                win.document.write(certHtml);
-                win.document.close();
-            };
+            const totalCO2 = (data.energy * 0.45 + data.fleet * 2.3 + data.waste * 0.15).toFixed(2);
 
             const handleDataChange = (field, value) => {
                 const newData = { ...data, [field]: value };
                 setData(newData);
-                const updatedUser = {
-                    ...user,
-                    businessData: {
-                        ...user?.businessData,
-                        data: newData,
-                        certified: false // Re-verify if data changes
-                    }
-                };
-                
+                const updatedUser = { ...user, mitigationPlan: { ...plan, data: newData } };
                 onUpdateUser(updatedUser);
-                
-                // Debounce Firestore backend sync
                 if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
-                saveTimeoutRef.current = setTimeout(() => {
-                    DB.updateUser(updatedUser);
-                }, 1500);
+                saveTimeoutRef.current = setTimeout(() => { DB.updateUser(updatedUser); }, 1200);
             };
 
-            const totalCO2 = (data.energy * 0.45 + data.fleet * 2.3 + data.waste * 0.15).toFixed(2);
+            // Paso 1: la empresa solicita el Plan de Mitigacion. No certifica
+            // nada automaticamente -- solo crea la solicitud real para que un
+            // profesional de la ONG la revise y asigne un caso.
+            const handleRequestPlan = () => {
+                const updatedUser = {
+                    ...user,
+                    mitigationPlan: {
+                        status: 'requested',
+                        requestedAt: new Date().toLocaleDateString('es-CL'),
+                        data: { energy: 0, fleet: 0, waste: 0 },
+                        goals: [],
+                        professional: null
+                    }
+                };
+                DB.updateUser(updatedUser);
+                onUpdateUser(updatedUser);
+                addToast('Solicitud enviada. HappyBeatCL ONG te contactará para asignar un profesional.', 'success');
+            };
+
+            const whatsappRequestMessage = () => {
+                const company = user?.companyProfile?.companyName || user?.name || user?.email;
+                return `Hola! Somos ${company} y acabamos de solicitar un Plan de Mitigación de Huella de Carbono en la app Happy Beat CL. Quisiéramos coordinar la asignación de un profesional y agendar una primera reunión.`;
+            };
 
             return (
                 <div className="animate-in fade-in duration-500 space-y-6 pb-32 px-1">
                     {/* Header */}
                     <div className="flex justify-between items-start">
                         <div>
-                            <h1 className="text-2xl font-black text-white tracking-tight">Portal Pro para Empresas</h1>
-                            <p className="text-gray-400 text-xs font-medium">Emisiones bajo GHG Protocol</p>
+                            <h1 className="text-2xl font-black text-white tracking-tight">Plan de Mitigación</h1>
+                            <p className="text-gray-400 text-xs font-medium">Acompañamiento profesional de {ONG_LEGAL_NAME}</p>
                         </div>
-                        <span className="bg-blue-500/10 text-blue-400 text-[10px] font-black px-2 py-0.5 rounded border border-blue-500/20 uppercase tracking-tighter">Internacional</span>
+                        <span className="bg-blue-500/10 text-blue-400 text-[10px] font-black px-2 py-0.5 rounded border border-blue-500/20 uppercase tracking-tighter">B2B / ESG</span>
                     </div>
 
-                    {/* Summary Cards */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="glass-card p-4 border-l-4 border-blue-500 flex flex-col justify-between h-28">
-                            <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Total CO2 Mitigado</span>
-                            <div>
-                                <div className="text-2xl font-black text-white">{(Number(totalCO2) / 1).toFixed(0)} <span className="text-xs text-blue-400">kg</span></div>
-                                <span className="text-[8px] text-blue-400/60 font-bold uppercase mt-1 block">Metodología WRI/WBCSD</span>
-                            </div>
-                        </div>
-                        <div className="glass-card p-4 border-l-4 border-mint-500 flex flex-col justify-between h-28">
-                            <span className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Estado</span>
-                            <div>
-                                <div className={`text-sm font-black ${certified ? 'text-mint-400' : 'text-beatcoin animate-pulse'}`}>
-                                    {certified ? '✓ CERTIFICADO' : 'PENDIENTE'}
-                                </div>
-                                <span className="text-[8px] text-gray-500 font-bold uppercase mt-1 block italic text-mint-500/60">Auditoría Anual 2026</span>
-                            </div>
+                    {/* Progreso de las 4 etapas */}
+                    <div className="glass-card p-5 space-y-4">
+                        <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500">Proceso de Certificación</h3>
+                        <div className="grid grid-cols-4 gap-2">
+                            {[
+                                { key: 'requested', label: 'Solicitud', icon: '📩' },
+                                { key: 'assigned', label: 'Asignación', icon: '👤' },
+                                { key: 'in_progress', label: 'Ejecución', icon: '🎯' },
+                                { key: 'completed', label: 'Certificación', icon: '🏆' },
+                            ].map((step, i) => {
+                                const order = ['none', 'requested', 'assigned', 'in_progress', 'completed'];
+                                const currentIdx = order.indexOf(status);
+                                const stepIdx = order.indexOf(step.key);
+                                const done = currentIdx >= stepIdx;
+                                return (
+                                    <div key={step.key} className="flex flex-col items-center space-y-1.5">
+                                        <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm border-2 ${done ? 'bg-mint-500/20 border-mint-500 text-mint-400' : 'bg-white/5 border-white/10 text-gray-600'}`}>
+                                            {step.icon}
+                                        </div>
+                                        <span className={`text-[8px] font-black uppercase text-center ${done ? 'text-mint-400' : 'text-gray-600'}`}>{step.label}</span>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
 
-                    {/* Data Entry Form */}
-                    <div className="glass-card p-6 space-y-6">
-                        <h3 className="text-xs font-black uppercase tracking-[0.2em] text-mint-400 border-b border-white/5 pb-3">Ingreso de Datos de Ahorro</h3>
-
-                        <div className="space-y-5">
-                            <div>
-                                <label className="text-[10px] font-bold block mb-2 px-1">
-                                    <span className="text-blue-400 mr-2 uppercase">[Alcance 2]</span> Energía Eléctrica (kWh)
-                                </label>
-                                <input
-                                    type="number"
-                                    value={data.energy}
-                                    onChange={(e) => handleDataChange('energy', Number(e.target.value))}
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-blue-500 outline-none transition-all text-sm font-bold"
-                                    placeholder="Ej: 1200"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-[10px] font-bold block mb-2 px-1">
-                                    <span className="text-orange-400 mr-2 uppercase">[Alcance 1]</span> Combustión Fija/Móvil (Km o Litros)
-                                </label>
-                                <input
-                                    type="number"
-                                    value={data.fleet}
-                                    onChange={(e) => handleDataChange('fleet', Number(e.target.value))}
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-orange-500 outline-none transition-all text-sm font-bold"
-                                    placeholder="Ej: 450"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-[10px] font-bold block mb-2 px-1">
-                                    <span className="text-purple-400 mr-2 uppercase">[Alcance 3]</span> Otras Emisiones Indirectas (kg CO2)
-                                </label>
-                                <input
-                                    type="number"
-                                    value={data.waste}
-                                    onChange={(e) => handleDataChange('waste', Number(e.target.value))}
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-purple-500 outline-none transition-all text-sm font-bold"
-                                    placeholder="Ej: 300"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Verification */}
-                        <div className="pt-4 space-y-4">
-                            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Método de Verificación</h4>
-                            <label className="p-4 bg-white/5 border border-dashed border-white/20 rounded-2xl flex items-center space-x-4 cursor-pointer hover:bg-white/10 transition-all group relative">
-                                <input
-                                    id="business-file-upload"
-                                    type="file"
-                                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
-                                    onChange={(e) => handleVerify(e.target.files[0])}
-                                    disabled={isVerifying || certified}
-                                    title="Sube tu factura o certificado"
-                                />
-                                <div className="w-10 h-10 bg-mint-500/10 rounded-xl flex items-center justify-center text-mint-500 group-hover:scale-110 transition-transform">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                    {/* Etapa 0: Sin solicitud -- explicacion + boton para solicitar */}
+                    {status === 'none' && (
+                        <div className="glass-card p-6 space-y-5">
+                            <div className="space-y-3">
+                                <h3 className="text-sm font-black text-white">¿Cómo funciona el Plan de Mitigación?</h3>
+                                <div className="space-y-3 text-[11px] text-gray-400 leading-relaxed">
+                                    <div className="flex items-start space-x-3">
+                                        <span className="text-mint-400 font-black flex-shrink-0">1.</span>
+                                        <span>Solicitas el Plan de Mitigación desde aquí. Tu solicitud llega directamente al equipo de <span className="text-white font-bold">{ONG_LEGAL_NAME}</span>.</span>
+                                    </div>
+                                    <div className="flex items-start space-x-3">
+                                        <span className="text-mint-400 font-black flex-shrink-0">2.</span>
+                                        <span>Se te asigna un <span className="text-white font-bold">profesional titulado del área de medio ambiente</span> como representante de tu caso.</span>
+                                    </div>
+                                    <div className="flex items-start space-x-3">
+                                        <span className="text-mint-400 font-black flex-shrink-0">3.</span>
+                                        <span>Trabajan en conjunto para fijar metas de reducción de huella de carbono, ejecutando el plan paso a paso.</span>
+                                    </div>
+                                    <div className="flex items-start space-x-3">
+                                        <span className="text-mint-400 font-black flex-shrink-0">4.</span>
+                                        <span>Al cierre del proceso, <span className="text-white font-bold">{ONG_LEGAL_NAME}</span> certifica oficialmente los resultados obtenidos.</span>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="text-xs font-black text-white">{user?.businessData?.fileName || 'Subir Factura/Certificado'}</p>
-                                    <p className="text-[9px] text-gray-500 uppercase font-bold">PDF, JPG o PNG (Máx 10MB)</p>
-                                </div>
-                            </label>
-
+                            </div>
+                            <div className="bg-beatcoin/5 border border-beatcoin/20 rounded-2xl p-4">
+                                <p className="text-[10px] text-beatcoin font-bold uppercase tracking-widest mb-1">Sobre los valores</p>
+                                <p className="text-[10px] text-gray-400 leading-relaxed">El acompañamiento se rige bajo un modelo de <span className="text-white font-bold">donación</span>, con un valor referencial que varía según el tamaño de tu empresa y los recursos que involucre el proceso. Esto se conversa directamente con tu profesional asignado.</p>
+                            </div>
                             <button
-                                onClick={() => document.getElementById('business-file-upload')?.click()}
-                                disabled={isVerifying || certified}
-                                className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all duration-300 ${certified ? 'bg-mint-500/20 text-mint-400 border border-mint-500/30' : 'bg-mint-500 text-forest-950 shadow-[0_0_30px_rgba(17,212,66,0.3)] hover:scale-[1.02] active:scale-95'}`}
+                                onClick={handleRequestPlan}
+                                className="w-full py-5 rounded-3xl font-black text-xs uppercase tracking-[0.2em] bg-gradient-to-r from-mint-500 to-cyan-500 text-forest-950 shadow-[0_10px_40px_rgba(17,212,66,0.3)] hover:scale-[1.02] active:scale-95 transition-all"
                             >
-                                {isVerifying ? (
-                                    <span className="flex items-center justify-center space-x-2">
-                                        <div className="w-3 h-3 border-2 border-forest-950/30 border-t-forest-950 rounded-full animate-spin"></div>
-                                        <span>Analizando Evidencia...</span>
-                                    </span>
-                                ) : certified ? 'EMISIONES CERTIFICADAS ✓' : 'ADJUNTAR Y CERTIFICAR'}
+                                🚀 Solicitar Plan de Mitigación
                             </button>
+                        </div>
+                    )}
 
-                            {certified && (
-                                <div className="space-y-3 animate-in fade-in zoom-in duration-500">
-                                    <a
-                                        href="https://link.mercadopago.cl/happybeatcl"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        onClick={() => {
-                                            setTimeout(() => {
-                                                const btn = document.getElementById('downloadCertBtn');
-                                                if (btn) btn.style.display = 'flex';
-                                            }, 2000);
-                                        }}
-                                        className="w-full py-5 rounded-3xl font-black text-xs uppercase tracking-[0.2em] bg-gradient-to-r from-blue-700 to-blue-500 text-white shadow-[0_10px_40px_rgba(37,99,235,0.4)] hover:scale-[1.03] active:scale-95 transition-all text-center flex items-center justify-center space-x-3 border border-blue-400/30"
-                                    >
-                                        <span className="text-xl">💎</span>
-                                        <span>ACTIVAR AUDITORÍA Y DESCARGA OFICIAL</span>
-                                    </a>
+                    {/* Etapa 1: Solicitud enviada, esperando asignacion */}
+                    {status === 'requested' && (
+                        <div className="glass-card p-6 space-y-5 text-center">
+                            <div className="w-16 h-16 mx-auto bg-blue-500/10 rounded-full flex items-center justify-center border-2 border-blue-500/30">
+                                <span className="text-3xl">📩</span>
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-black text-white">Solicitud recibida</h3>
+                                <p className="text-[11px] text-gray-400 mt-1 leading-relaxed">Enviada el {plan.requestedAt}. El equipo de {ONG_LEGAL_NAME} está revisando tu caso para asignarte un profesional del área ambiental.</p>
+                            </div>
+                            <a
+                                href={`https://wa.me/${ONG_WHATSAPP}?text=${encodeURIComponent(whatsappRequestMessage())}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-500 text-white py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all active:scale-95"
+                            >
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.149-.15.3-.347.44-.52.15-.174.2-.298.3-.497.099-.198.05-.371-.05-.52-.099-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.363.709.306 1.262.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347" /><path d="M12 0C5.373 0 0 5.373 0 12c0 2.121.553 4.113 1.523 5.845L0 24l6.335-1.663A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.94a9.9 9.9 0 01-5.05-1.383l-.362-.216-3.75.984 1.001-3.653-.236-.375A9.9 9.9 0 012.06 12C2.06 6.514 6.514 2.06 12 2.06S21.94 6.514 21.94 12 17.486 21.94 12 21.94z" /></svg>
+                                <span>Escribir por WhatsApp</span>
+                            </a>
+                            <p className="text-[9px] text-gray-500">También puedes escribir a <span className="text-gray-300 font-bold">{ONG_EMAIL}</span></p>
+                        </div>
+                    )}
 
-                                    <button
-                                        id="downloadCertBtn"
-                                        onClick={downloadCertificate}
-                                        style={{ display: 'none' }}
-                                        className="w-full py-5 rounded-3xl font-black text-sm uppercase tracking-[0.2em] bg-mint-500 text-forest-950 hover:bg-white transition-all text-center flex items-center justify-center space-x-3 animate-bounce shadow-[0_0_30px_rgba(17,212,66,0.5)]"
-                                    >
-                                        <span className="text-xl">🏆</span>
-                                        <span>OBTENER CERTIFICADO PDF PRO</span>
-                                    </button>
+                    {/* Etapa 2: Profesional asignado, aun no inicia ejecucion */}
+                    {status === 'assigned' && plan.professional && (
+                        <div className="glass-card p-6 space-y-5">
+                            <div className="flex items-center space-x-4">
+                                <div className="w-14 h-14 bg-blue-500/20 rounded-2xl flex items-center justify-center text-2xl border border-blue-500/30">👤</div>
+                                <div>
+                                    <p className="text-[9px] text-blue-400 font-black uppercase tracking-widest">Profesional Asignado</p>
+                                    <h3 className="text-sm font-black text-white">{plan.professional.name}</h3>
+                                    <p className="text-[10px] text-gray-400">{plan.professional.title}</p>
                                 </div>
-                            )}
+                            </div>
+                            <p className="text-[11px] text-gray-400 leading-relaxed">Tu representante de {ONG_LEGAL_NAME} coordinará contigo la primera reunión para fijar las metas del plan de mitigación.</p>
+                            <a
+                                href={`https://wa.me/${ONG_WHATSAPP}?text=${encodeURIComponent('Hola! Quisiera coordinar la primera reunión de mi Plan de Mitigación con ' + plan.professional.name + '.')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-500 text-white py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all active:scale-95"
+                            >
+                                <span>Coordinar Reunión por WhatsApp</span>
+                            </a>
                         </div>
-                    </div>
+                    )}
 
-                    {/* Compliance Section */}
-                    <div className="glass-card p-6 bg-blue-500/5 border-blue-500/20 flex space-x-4 items-center">
-                        <div className="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center text-blue-400">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
-                        </div>
-                        <div className="space-y-1">
-                            <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Cumplimiento Global</h4>
-                            <p className="text-[10px] text-gray-400 leading-relaxed">
-                                Nuestras métricas están alineadas con el <span className="text-blue-400 font-bold">GHG Protocol</span> (WRI/WBCSD), asegurando validez internacional en reportes ESG.
-                            </p>
-                        </div>
-                    </div>
+                    {/* Etapa 3: Plan en ejecucion -- metas + registro referencial de datos */}
+                    {status === 'in_progress' && (
+                        <>
+                            <div className="glass-card p-6 space-y-4">
+                                <div className="flex items-center space-x-4 pb-4 border-b border-white/5">
+                                    <div className="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center text-xl border border-blue-500/30">👤</div>
+                                    <div>
+                                        <p className="text-[9px] text-blue-400 font-black uppercase tracking-widest">Representante Asignado</p>
+                                        <h3 className="text-sm font-black text-white">{plan.professional?.name}</h3>
+                                        <p className="text-[10px] text-gray-400">{plan.professional?.title}</p>
+                                    </div>
+                                </div>
+                                <h3 className="text-xs font-black uppercase tracking-widest text-mint-400">Metas Fijadas en Conjunto</h3>
+                                <div className="space-y-2">
+                                    {(plan.goals || []).length === 0 ? (
+                                        <p className="text-[11px] text-gray-500 italic">Tu profesional asignado aún no ha registrado las metas del plan.</p>
+                                    ) : (
+                                        plan.goals.map((g, i) => (
+                                            <div key={i} className="bg-white/5 rounded-xl p-3 flex items-center justify-between border border-white/5">
+                                                <div>
+                                                    <p className="text-xs font-bold text-white">{g.title}</p>
+                                                    <p className="text-[9px] text-gray-500">{g.description}</p>
+                                                </div>
+                                                <span className={`text-[9px] font-black px-2 py-1 rounded-full uppercase ${g.done ? 'bg-mint-500/20 text-mint-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
+                                                    {g.done ? 'Cumplida' : 'En curso'}
+                                                </span>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
 
-                    {/* Certificate Preview (Only if certified) */}
-                    {certified && (
+                            <div className="glass-card p-6 space-y-6">
+                                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-mint-400 border-b border-white/5 pb-3">Registro Referencial de Consumo</h3>
+                                <p className="text-[10px] text-gray-500 -mt-2">Estos datos son referenciales y ayudan a tu profesional a preparar el informe final. No generan una certificación automática.</p>
+                                <div className="space-y-5">
+                                    <div>
+                                        <label className="text-[10px] font-bold block mb-2 px-1">
+                                            <span className="text-blue-400 mr-2 uppercase">[Alcance 2]</span> Energía Eléctrica (kWh)
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={data.energy}
+                                            onChange={(e) => handleDataChange('energy', Number(e.target.value))}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-blue-500 outline-none transition-all text-sm font-bold"
+                                            placeholder="Ej: 1200"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold block mb-2 px-1">
+                                            <span className="text-orange-400 mr-2 uppercase">[Alcance 1]</span> Combustible de Flota (Litros)
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={data.fleet}
+                                            onChange={(e) => handleDataChange('fleet', Number(e.target.value))}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-orange-500 outline-none transition-all text-sm font-bold"
+                                            placeholder="Ej: 450"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold block mb-2 px-1">
+                                            <span className="text-purple-400 mr-2 uppercase">[Alcance 3]</span> Residuos Generados (kg)
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={data.waste}
+                                            onChange={(e) => handleDataChange('waste', Number(e.target.value))}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-purple-500 outline-none transition-all text-sm font-bold"
+                                            placeholder="Ej: 300"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="bg-white/5 rounded-2xl p-4 text-center">
+                                    <p className="text-[9px] text-gray-500 uppercase font-black tracking-widest">Estimación Referencial</p>
+                                    <p className="text-2xl font-black text-white mt-1">{totalCO2} <span className="text-xs text-mint-400">kg CO2e</span></p>
+                                </div>
+                            </div>
+
+                            <div className="glass-card p-6 bg-blue-500/5 border-blue-500/20 space-y-3">
+                                <p className="text-[10px] text-blue-400 font-black uppercase tracking-widest">¿Listo para certificar?</p>
+                                <p className="text-[10px] text-gray-400 leading-relaxed">Cuando tu profesional confirme que se cumplieron las metas del plan, coordina el cierre y la certificación final directamente con {ONG_LEGAL_NAME}.</p>
+                                <a
+                                    href={`https://wa.me/${ONG_WHATSAPP}?text=${encodeURIComponent('Hola! Quisiera coordinar el cierre y certificación de mi Plan de Mitigación.')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="w-full flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-500 text-white py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all active:scale-95"
+                                >
+                                    <span>Coordinar Cierre por WhatsApp</span>
+                                </a>
+                            </div>
+                        </>
+                    )}
+
+                    {/* Etapa 4: Certificado */}
+                    {status === 'completed' && (
                         <div className="animate-in zoom-in duration-500">
                             <div className="glass-card p-1 overflow-hidden">
                                 <div className="bg-gradient-to-br from-forest-900 to-forest-950 p-8 text-center space-y-4 border border-mint-500/20 rounded-[22px] relative">
@@ -3778,27 +3790,36 @@
                                         <span className="text-3xl">🌱</span>
                                     </div>
                                     <div className="space-y-1">
-                                        <h4 className="text-white font-black uppercase text-base tracking-tighter italic">Certificado Happy Beat</h4>
-                                        <p className="text-mint-400 text-[8px] font-black uppercase tracking-widest">Protocolo GHG Estándar Corporativo</p>
+                                        <h4 className="text-white font-black uppercase text-base tracking-tighter italic">Certificado {ONG_LEGAL_NAME}</h4>
+                                        <p className="text-mint-400 text-[8px] font-black uppercase tracking-widest">Plan de Mitigación de Huella de Carbono</p>
                                     </div>
                                     <div className="py-4 border-y border-white/5">
-                                        <p className="text-gray-500 text-[8px] uppercase font-black mb-1">Empresa Beneficiaria:</p>
+                                        <p className="text-gray-500 text-[8px] uppercase font-black mb-1">Empresa Certificada:</p>
                                         <p className="text-white font-black text-xs uppercase tracking-tight">{user?.companyProfile?.companyName || user?.name || 'EMPRESA PARTNER'}</p>
                                     </div>
-                                    <div className="flex justify-between items-end opacity-60">
-                                        <div className="text-left text-[8px]">
-                                            <p className="text-gray-500 uppercase font-black">ID Certificado</p>
-                                            <p className="font-mono text-white">HB-2026-DX-99</p>
-                                        </div>
-                                        <div className="w-10 h-10 bg-white rounded-md p-1">
-                                            <div className="w-full h-full bg-black flex items-center justify-center text-[8px] font-bold">QR</div>
-                                        </div>
+                                    <div className="text-left text-[10px] text-gray-400 space-y-1 px-2">
+                                        <p><span className="text-white font-bold">Representante ONG:</span> {plan.professional?.name} ({plan.professional?.title})</p>
+                                        <p><span className="text-white font-bold">Total mitigado:</span> {totalCO2} kg CO2e (referencial)</p>
+                                        <p><span className="text-white font-bold">Certificado el:</span> {plan.certifiedAt}</p>
                                     </div>
                                 </div>
-                                <button onClick={downloadCertificate} className="w-full py-3 bg-white/5 hover:bg-white/10 text-white text-[9px] font-black uppercase tracking-widest transition-all">Descargar PDF Oficial</button>
+                                <button onClick={() => window.print()} className="w-full py-3 bg-white/5 hover:bg-white/10 text-white text-[9px] font-black uppercase tracking-widest transition-all">Imprimir / Guardar como PDF</button>
                             </div>
                         </div>
                     )}
+
+                    {/* Compliance Section */}
+                    <div className="glass-card p-6 bg-blue-500/5 border-blue-500/20 flex space-x-4 items-center">
+                        <div className="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center text-blue-400">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                        </div>
+                        <div className="space-y-1">
+                            <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Certificación Real, no Automática</h4>
+                            <p className="text-[10px] text-gray-400 leading-relaxed">
+                                La certificación es otorgada por <span className="text-blue-400 font-bold">{ONG_LEGAL_NAME}</span>, amparada en su personalidad jurídica, tras un proceso ejecutado junto a un profesional titulado del área ambiental. No existe validación automática ni algorítmica: cada caso es revisado por personas reales.
+                            </p>
+                        </div>
+                    </div>
                 </div>
             );
         };
