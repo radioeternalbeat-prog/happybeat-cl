@@ -94,7 +94,7 @@ Con esta regla, cada usuario autenticado solo puede leer/escribir su propio docu
 - [ ] Decidir si se migra a un proyecto con build (Vite/Next.js) para mejor mantenibilidad, o se mantiene como HTML único.
 - [x] Agregar clave real de Geoapify para activar el Eco-Mapa en vivo (hecho: el botón "Activar GPS" ahora pide la ubicación real del usuario con `navigator.geolocation` y centra el mapa ahí).
 - [ ] Restringir la API key de Geoapify por dominio en su dashboard (recomendado, no bloqueante).
-- [ ] Convertir los "Puntos Cercanos" (Punto Limpio, Ciclovía, Estación EV) de datos fijos a datos dinámicos/reales.
+- [x] Convertir los "Puntos Cercanos" de datos fijos a datos reales: al activar el GPS, la app consulta la Places API de Geoapify (categorías `service.recycling`, `service.vehicle.charging_station`, `rental.bicycle`/`parking.bicycles`) en un radio de 3km alrededor del usuario, y muestra los resultados reales ordenados por distancia. Si no encuentra nada cercano, muestra los ejemplos originales como respaldo.
 - [ ] Definir mejoras/modificaciones puntuales a implementar.
 
 ---

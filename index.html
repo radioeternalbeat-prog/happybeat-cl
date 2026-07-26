@@ -321,10 +321,76 @@
         const GEOAPIFY_API_KEY = 'cc0f301e7ce548c0a439090892cb29e3';
         const SANTIAGO_COORDS = { lat: -33.456940, lon: -70.648270 };
 
+        // Categorias reales de Geoapify Places API mapeadas a "recursos
+        // amigables" del ecosistema Happy Beat CL. Referencia:
+        // https://apidocs.geoapify.com/docs/places/
+        const ECO_PLACE_TYPES = [
+            { categories: 'service.recycling', icon: '♻️', label: 'Punto de Reciclaje', color: 'bg-blue-500/10', reward: '+50 B' },
+            { categories: 'service.vehicle.charging_station', icon: '🔋', label: 'Estación Carga EV', color: 'bg-orange-500/10', reward: 'Partner' },
+            { categories: 'rental.bicycle,parking.bicycles', icon: '🚲', label: 'Bicicletas / Parking', color: 'bg-mint-500/10', reward: '+0.5/km' },
+        ];
+
+        // Distancia en linea recta (formula haversine) entre dos puntos,
+        // en kilometros. Se usa solo para mostrar "A X km de ti" en la UI.
+        const distanceKm = (lat1, lon1, lat2, lon2) => {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        };
+
+        // Ejemplos por defecto: se muestran solo si el GPS no esta activo,
+        // o si la busqueda real no encuentra nada en la zona.
+        const DEFAULT_NEARBY_POINTS = [
+            { icon: '♻️', label: 'Punto Limpio Providencia', color: 'bg-blue-500/10', distanceLabel: 'A 1.2 km de ti', sub: 'Reciclaje Integral', reward: '+50 B' },
+            { icon: '🚲', label: 'Ciclovía Río Mapocho', color: 'bg-mint-500/10', distanceLabel: 'A 0.5 km de ti', sub: 'Ruta Escénica', reward: '+0.5/km' },
+            { icon: '🔋', label: 'Estación Carga EV', color: 'bg-orange-500/10', distanceLabel: 'A 3.4 km de ti', sub: 'Carga Rápida', reward: 'Partner' },
+        ];
+
         const EcoMap = ({ user }) => {
             const [coords, setCoords] = useState(SANTIAGO_COORDS);
             const [gpsStatus, setGpsStatus] = useState('idle'); // idle | loading | active | error
+            const [nearbyPoints, setNearbyPoints] = useState(null); // null = usar los de ejemplo
+            const [loadingPoints, setLoadingPoints] = useState(false);
             const toast = useToast();
+
+            const fetchNearbyPoints = async (lat, lon) => {
+                setLoadingPoints(true);
+                try {
+                    const categories = ECO_PLACE_TYPES.map(t => t.categories).join(',');
+                    const url = `https://api.geoapify.com/v2/places?categories=${categories}&filter=circle:${lon},${lat},3000&bias=proximity:${lon},${lat}&limit=15&apiKey=${GEOAPIFY_API_KEY}`;
+                    const res = await fetch(url);
+                    const data = await res.json();
+
+                    const points = (data.features || []).map(f => {
+                        const props = f.properties;
+                        const cats = props.categories || [];
+                        // Determinar a que "tipo amigable" pertenece este lugar
+                        const type = ECO_PLACE_TYPES.find(t =>
+                            t.categories.split(',').some(c => cats.includes(c))
+                        ) || ECO_PLACE_TYPES[0];
+                        const dist = distanceKm(lat, lon, props.lat, props.lon);
+                        return {
+                            icon: type.icon,
+                            label: props.name || type.label,
+                            color: type.color,
+                            distanceLabel: `A ${dist.toFixed(1)} km de ti`,
+                            sub: props.address_line2 || props.street || 'Chile',
+                            reward: type.reward,
+                            lat: props.lat,
+                            lon: props.lon
+                        };
+                    }).sort((a, b) => parseFloat(a.distanceLabel.match(/[\d.]+/)) - parseFloat(b.distanceLabel.match(/[\d.]+/)));
+
+                    setNearbyPoints(points.length > 0 ? points.slice(0, 8) : []);
+                } catch (err) {
+                    console.error('Error buscando puntos cercanos', err);
+                    setNearbyPoints([]);
+                } finally {
+                    setLoadingPoints(false);
+                }
+            };
 
             const activateGPS = () => {
                 if (!('geolocation' in navigator)) {
@@ -335,9 +401,11 @@
                 setGpsStatus('loading');
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
-                        setCoords({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+                        const newCoords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+                        setCoords(newCoords);
                         setGpsStatus('active');
-                        toast('¡GPS activado! Mostrando tu ubicación actual.', 'success');
+                        toast('¡GPS activado! Buscando recursos cerca de ti...', 'success');
+                        fetchNearbyPoints(newCoords.lat, newCoords.lon);
                     },
                     (err) => {
                         setGpsStatus('error');
@@ -348,6 +416,7 @@
             };
 
             const mapUrl = `https://maps.geoapify.com/v1/staticmap?style=dark-matter&width=600&height=400&center=lonlat:${coords.lon},${coords.lat}&zoom=13&marker=lonlat:${coords.lon},${coords.lat};color:%2311d442;size:large&apiKey=${GEOAPIFY_API_KEY}`;
+            const displayedPoints = nearbyPoints !== null && nearbyPoints.length > 0 ? nearbyPoints : DEFAULT_NEARBY_POINTS;
 
             return (
             <div className="animate-in fade-in duration-500 space-y-6 pb-32">
@@ -400,57 +469,51 @@
 
                 {/* Nearby Locations List */}
                 <div className="space-y-4">
-                    <h3 className="text-sm font-black text-white uppercase tracking-widest pl-2 border-l-4 border-mint-500">Puntos Cercanos</h3>
-                    
-                    <div className="space-y-3">
-                        {/* Point 1 */}
-                        <div className="glass-card p-4 border border-white/5 hover:border-mint-500/30 transition-all cursor-pointer group flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                                    ♻️
-                                </div>
-                                <div>
-                                    <h4 className="text-sm font-black text-white group-hover:text-mint-400 transition-colors">Punto Limpio Providencia</h4>
-                                    <p className="text-xs text-gray-500 font-medium">A 1.2 km de ti · Reciclaje Integral</p>
-                                </div>
-                            </div>
-                            <div className="text-right">
-                                <span className="text-xs font-black text-beatcoin bg-beatcoin/10 px-2 py-1 rounded-lg">+50 B</span>
-                            </div>
-                        </div>
-
-                        {/* Point 2 */}
-                        <div className="glass-card p-4 border border-white/5 hover:border-mint-500/30 transition-all cursor-pointer group flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                                <div className="w-12 h-12 rounded-2xl bg-mint-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                                    🚲
-                                </div>
-                                <div>
-                                    <h4 className="text-sm font-black text-white group-hover:text-mint-400 transition-colors">Ciclovía Río Mapocho</h4>
-                                    <p className="text-xs text-gray-500 font-medium">A 0.5 km de ti · Ruta Escénica</p>
-                                </div>
-                            </div>
-                            <div className="text-right">
-                                <span className="text-xs font-black text-beatcoin bg-beatcoin/10 px-2 py-1 rounded-lg">+0.5/km</span>
-                            </div>
-                        </div>
-
-                        {/* Point 3 */}
-                        <div className="glass-card p-4 border border-white/5 hover:border-mint-500/30 transition-all cursor-pointer group flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                                <div className="w-12 h-12 rounded-2xl bg-orange-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                                    🔋
-                                </div>
-                                <div>
-                                    <h4 className="text-sm font-black text-white group-hover:text-mint-400 transition-colors">Estación Carga EV</h4>
-                                    <p className="text-xs text-gray-500 font-medium">A 3.4 km de ti · Carga Rápida</p>
-                                </div>
-                            </div>
-                            <div className="text-right">
-                                <span className="text-[10px] font-black text-orange-400 uppercase tracking-tight">Partner</span>
-                            </div>
-                        </div>
+                    <div className="flex items-center justify-between pl-2 pr-1">
+                        <h3 className="text-sm font-black text-white uppercase tracking-widest border-l-4 border-mint-500 pl-2 -ml-2">Puntos Cercanos</h3>
+                        {nearbyPoints !== null && nearbyPoints.length > 0 && (
+                            <span className="text-[9px] font-black text-mint-400 uppercase tracking-widest bg-mint-500/10 px-2 py-1 rounded-lg">📍 En vivo</span>
+                        )}
+                        {nearbyPoints !== null && nearbyPoints.length === 0 && !loadingPoints && (
+                            <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Sin resultados cercanos</span>
+                        )}
                     </div>
+
+                    {loadingPoints && (
+                        <div className="glass-card p-6 flex items-center justify-center space-x-3 border-white/5">
+                            <div className="w-4 h-4 border-2 border-mint-400/30 border-t-mint-400 rounded-full animate-spin"></div>
+                            <span className="text-xs text-gray-400 font-medium">Buscando recursos reales cerca de ti...</span>
+                        </div>
+                    )}
+
+                    {!loadingPoints && (
+                        <div className="space-y-3">
+                            {displayedPoints.map((point, i) => (
+                                <div key={i} className="glass-card p-4 border border-white/5 hover:border-mint-500/30 transition-all cursor-pointer group flex items-center justify-between">
+                                    <div className="flex items-center space-x-4">
+                                        <div className={`w-12 h-12 rounded-2xl ${point.color} flex items-center justify-center text-2xl group-hover:scale-110 transition-transform`}>
+                                            {point.icon}
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-black text-white group-hover:text-mint-400 transition-colors">{point.label}</h4>
+                                            <p className="text-xs text-gray-500 font-medium">{point.distanceLabel} · {point.sub}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        {point.reward === 'Partner' ? (
+                                            <span className="text-[10px] font-black text-orange-400 uppercase tracking-tight">Partner</span>
+                                        ) : (
+                                            <span className="text-xs font-black text-beatcoin bg-beatcoin/10 px-2 py-1 rounded-lg">{point.reward}</span>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {nearbyPoints === null && (
+                        <p className="text-[10px] text-gray-500 text-center px-4">Activa el GPS para ver recursos reales (reciclaje, carga EV, bicicletas) cerca de tu ubicación actual.</p>
+                    )}
                 </div>
             </div>
             );
