@@ -807,8 +807,8 @@
                         onClick={() => setIsExpanded(!isExpanded)}
                     >
                         <div className="flex items-center space-x-4">
-                            <div className="w-10 h-10 bg-mint-500/20 rounded-2xl flex items-center justify-center text-xl shadow-inner group">
-                                <span className={playState === 'playing' ? 'animate-spin-slow' : 'animate-bounce'}>📻</span>
+                            <div className={`w-10 h-10 rounded-full overflow-hidden shadow-inner border border-mint-500/30 flex-shrink-0 ${playState === 'playing' ? 'animate-spin-slow' : ''}`}>
+                                <img src="radio-logo.png" className="w-full h-full object-cover" alt="Logo Eternal Beat Radio" />
                             </div>
                             <div>
                                 <h4 className="text-xs font-black uppercase text-mint-400 tracking-widest leading-none mb-1">Happy Harmony Radio</h4>
@@ -830,6 +830,9 @@
                     </div>
                     {isExpanded && (
                         <div className="p-6 border-t border-white/5 animate-in slide-in-from-top duration-500 flex flex-col items-center space-y-4">
+                            <div className={`w-28 h-28 rounded-full overflow-hidden border-2 border-mint-500/30 shadow-[0_0_25px_rgba(17,212,66,0.2)] ${playState === 'playing' ? 'animate-spin-slow' : ''}`}>
+                                <img src="radio-logo.png" className="w-full h-full object-cover" alt="Logo Eternal Beat Radio" />
+                            </div>
                             <button
                                 onClick={togglePlay}
                                 className={`w-16 h-16 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(17,212,66,0.3)] transition-all active:scale-95 ${playState === 'error' ? 'bg-red-500/20 border-2 border-red-500/40' : 'bg-mint-500'}`}
