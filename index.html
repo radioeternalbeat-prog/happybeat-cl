@@ -2058,8 +2058,13 @@
             );
         };
 
+        // Numero de WhatsApp del equipo Happy Beat CL para coordinar la
+        // entrega fisica de premios canjeados.
+        const REWARDS_WHATSAPP = '56939010237';
+
         const Rewards = ({ user, onUpdateUser }) => {
             const [view, setView] = useState('shop'); // 'shop' or 'history'
+            const [showTerms, setShowTerms] = useState(false);
 
             const items = [
                 {
@@ -2101,14 +2106,27 @@
                     toast('No tienes suficientes Beatcoins. ¡A seguir pedaleando!', 'error');
                     return;
                 }
+                const redemption = {
+                    ...item,
+                    date: new Date().toLocaleDateString(),
+                    code: Math.random().toString(36).substring(2, 10).toUpperCase(),
+                    status: 'pendiente', // pendiente -> entregado (lo cambia un admin al despachar)
+                    userEmail: user.email,
+                    userName: user.name
+                };
                 const updatedUser = {
                     ...user,
                     points: (user.points || 0) - item.cost,
-                    redeemed: [...(user.redeemed || []), { ...item, date: new Date().toLocaleDateString(), code: Math.random().toString(36).substring(2, 10).toUpperCase() }]
+                    redeemed: [...(user.redeemed || []), redemption]
                 };
                 DB.updateUser(updatedUser);
                 onUpdateUser(updatedUser);
-                toast(`¡Canje exitoso! Revisa "Mis Canjes" 🎁`, 'success');
+                toast(`¡Canje exitoso! Coordina la entrega en "Mis Canjes" 🎁`, 'success');
+            };
+
+            const whatsappLink = (r) => {
+                const msg = `Hola! Quiero coordinar la entrega de mi premio canjeado en Happy Beat CL.\n\nPremio: ${r.name}\nCódigo: ${r.code}\nNombre: ${user.name || user.email}\nEmail: ${user.email}`;
+                return `https://wa.me/${REWARDS_WHATSAPP}?text=${encodeURIComponent(msg)}`;
             };
 
             return (
@@ -2166,6 +2184,35 @@
                         </div>
                     </a>
 
+                    <button onClick={() => setShowTerms(true)} className="w-full text-center py-1">
+                        <span className="text-[10px] text-gray-500 underline hover:text-gray-300 transition-colors">📋 Ver Términos y Condiciones de Canje</span>
+                    </button>
+
+                    {showTerms && (
+                        <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setShowTerms(false)}>
+                            <div className="glass-card w-full max-w-md bg-forest-950 border border-white/10 max-h-[75vh] overflow-y-auto p-6 space-y-3 animate-in slide-in-from-bottom duration-300" onClick={(e) => e.stopPropagation()}>
+                                <div className="flex justify-between items-center sticky top-0 bg-forest-950 pb-2">
+                                    <h3 className="font-black text-sm text-beatcoin uppercase tracking-widest">Términos y Condiciones de Canje</h3>
+                                    <button onClick={() => setShowTerms(false)} className="text-gray-500 hover:text-white p-1">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                                    </button>
+                                </div>
+                                <ol className="text-[11px] text-gray-400 space-y-2.5 leading-relaxed list-decimal list-inside">
+                                    <li>Los Beatcoins son una moneda virtual interna de Happy Beat CL, sin valor monetario fuera de la aplicación, y no son transferibles entre cuentas.</li>
+                                    <li>Al canjear un premio, los Beatcoins correspondientes se descuentan de inmediato de tu saldo. El canje no es reembolsable ni reversible.</li>
+                                    <li>Todos los premios están sujetos a <span className="text-white font-bold">disponibilidad de stock</span>. Si un premio se agota después de tu canje, el equipo de Happy Beat CL se pondrá en contacto contigo para ofrecerte un premio alternativo de valor equivalente o la devolución de tus Beatcoins.</li>
+                                    <li>El canje genera un <span className="text-white font-bold">código único</span> que debes conservar. La entrega física del premio <span className="text-white font-bold">no es automática</span>: debes coordinarla manualmente contactando al equipo por WhatsApp desde la sección "Mis Canjes".</li>
+                                    <li>El plazo estimado de coordinación y entrega es de <span className="text-white font-bold">3 a 10 días hábiles</span> desde el primer contacto por WhatsApp, dependiendo de tu ubicación y el tipo de premio.</li>
+                                    <li>Debes presentar tu código de canje y verificar tu identidad (nombre y correo asociado a tu cuenta) al momento de coordinar o recibir el premio.</li>
+                                    <li>Los códigos de canje tienen una vigencia de <span className="text-white font-bold">30 días corridos</span> desde su generación. Pasado ese plazo sin haber coordinado la entrega, el premio podría quedar sin efecto.</li>
+                                    <li>Happy Beat CL se reserva el derecho de modificar, agregar o retirar premios del catálogo, así como sus costos en Beatcoins, sin previo aviso.</li>
+                                    <li>El mal uso de la aplicación (registros de actividad fraudulentos, cuentas múltiples, etc.) puede resultar en la anulación de canjes y/o suspensión de la cuenta.</li>
+                                    <li>Para dudas o reclamos sobre tu canje, contacta directamente al equipo por WhatsApp al número indicado en "Mis Canjes".</li>
+                                </ol>
+                            </div>
+                        </div>
+                    )}
+
                     {view === 'shop' ? (
                         <div className="grid grid-cols-1 gap-4">
                             {items.map(item => (
@@ -2205,21 +2252,35 @@
                                 </div>
                             ) : (
                                 user.redeemed.map((r, idx) => (
-                                    <div key={idx} className="glass-card p-4 border-l-4 border-mint-500 bg-white/5 animate-in slide-in-from-left duration-300">
+                                    <div key={idx} className={`glass-card p-4 border-l-4 bg-white/5 animate-in slide-in-from-left duration-300 ${r.status === 'entregado' ? 'border-mint-500' : 'border-beatcoin'}`}>
                                         <div className="flex justify-between items-start">
                                             <div>
                                                 <h4 className="font-bold text-white text-sm">{r.name}</h4>
                                                 <p className="text-[10px] text-gray-500 mt-0.5">Canjeado el: {r.date}</p>
                                             </div>
-                                            <span className="text-[10px] font-black bg-mint-500/10 text-mint-400 px-2 py-1 rounded-lg uppercase">Validado</span>
+                                            {r.status === 'entregado' ? (
+                                                <span className="text-[10px] font-black bg-mint-500/10 text-mint-400 px-2 py-1 rounded-lg uppercase">✓ Entregado</span>
+                                            ) : (
+                                                <span className="text-[10px] font-black bg-beatcoin/10 text-beatcoin px-2 py-1 rounded-lg uppercase">⏳ Pendiente</span>
+                                            )}
                                         </div>
                                         <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center">
                                             <div>
                                                 <span className="text-[9px] text-gray-400 uppercase font-bold tracking-widest block">Código de Cupón</span>
                                                 <span className="text-xs font-mono font-bold text-mint-500 mt-1 inline-block">{r.code}</span>
                                             </div>
-                                            <button className="text-[10px] font-bold text-gray-400 hover:text-white underline">Descargar PDF</button>
                                         </div>
+                                        {r.status !== 'entregado' && (
+                                            <a
+                                                href={whatsappLink(r)}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="mt-3 w-full flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-500 text-white py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all active:scale-95"
+                                            >
+                                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.149-.15.3-.347.44-.52.15-.174.2-.298.3-.497.099-.198.05-.371-.05-.52-.099-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.363.709.306 1.262.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347" /><path d="M12 0C5.373 0 0 5.373 0 12c0 2.121.553 4.113 1.523 5.845L0 24l6.335-1.663A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.94a9.9 9.9 0 01-5.05-1.383l-.362-.216-3.75.984 1.001-3.653-.236-.375A9.9 9.9 0 012.06 12C2.06 6.514 6.514 2.06 12 2.06S21.94 6.514 21.94 12 17.486 21.94 12 21.94z" /></svg>
+                                                <span>Coordinar entrega por WhatsApp</span>
+                                            </a>
+                                        )}
                                     </div>
                                 ))
                             )}
@@ -2623,6 +2684,64 @@
                                     </button>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <div className="glass-card overflow-hidden">
+                        <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
+                            <h3 className="font-bold text-sm tracking-widest uppercase text-beatcoin">Canjes Pendientes de Entrega</h3>
+                            <span className="bg-beatcoin/20 text-beatcoin text-[10px] font-black px-2 py-1 rounded-full">
+                                {users.reduce((acc, u) => acc + (u.redeemed || []).filter(r => r.status !== 'entregado').length, 0)} PENDIENTES
+                            </span>
+                        </div>
+                        <div className="divide-y divide-white/5 max-h-[400px] overflow-y-auto">
+                            {users.flatMap(u => (u.redeemed || [])
+                                .filter(r => r.status !== 'entregado')
+                                .map((r, idx) => ({ ...r, ownerId: u.id, ownerEmail: u.email, ownerName: u.name, redeemIdx: idx }))
+                            ).map((r) => (
+                                <div key={r.ownerEmail + '-' + r.code} className="p-6 flex items-center justify-between hover:bg-white/5 transition-colors">
+                                    <div className="flex items-center space-x-4">
+                                        <div className="w-10 h-10 rounded-xl bg-beatcoin/10 flex items-center justify-center border border-beatcoin/30">
+                                            <span className="text-xl">🎁</span>
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-sm">{r.name}</h4>
+                                            <p className="text-xs text-gray-500">{r.ownerName || r.ownerEmail} · {r.ownerEmail}</p>
+                                            <p className="text-[10px] text-gray-500 mt-0.5">Código: <span className="font-mono text-mint-500">{r.code}</span> · Canjeado: {r.date}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <a
+                                            href={`https://wa.me/${REWARDS_WHATSAPP}?text=${encodeURIComponent(`Hola ${r.ownerName || ''}! Te escribimos de Happy Beat CL para coordinar la entrega de tu premio "${r.name}" (código ${r.code}).`)}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-green-600/10 text-green-400 hover:bg-green-600/20 transition-colors"
+                                        >
+                                            Contactar
+                                        </a>
+                                        <button
+                                            onClick={() => {
+                                                const owner = DB.getUsers().find(x => x.email === r.ownerEmail);
+                                                if (!owner) return;
+                                                const updatedRedeemed = owner.redeemed.map(item =>
+                                                    item.code === r.code ? { ...item, status: 'entregado' } : item
+                                                );
+                                                DB.updateUser({ ...owner, redeemed: updatedRedeemed });
+                                                setUsers(DB.getUsers());
+                                                addToast(`Canje de ${r.ownerName || r.ownerEmail} marcado como entregado`, 'success');
+                                            }}
+                                            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-mint-500/10 text-mint-500 hover:bg-mint-500/20 transition-colors"
+                                        >
+                                            Marcar Entregado
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                            {users.reduce((acc, u) => acc + (u.redeemed || []).filter(r => r.status !== 'entregado').length, 0) === 0 && (
+                                <div className="p-8 text-center">
+                                    <p className="text-gray-500 text-sm">No hay canjes pendientes de entrega.</p>
+                                </div>
+                            )}
                         </div>
                     </div>
 
