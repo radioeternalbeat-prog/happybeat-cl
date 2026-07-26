@@ -1424,7 +1424,7 @@
             );
         };
 
-        const SyncHub = ({ user, onUpdateUser }) => {
+        const SyncHub = ({ user, onUpdateUser, setActiveTab }) => {
             const toast = useToast();
             const [activeSection, setActiveSection] = useState('devices');
             const [mode, setMode] = useState('none');
@@ -1497,9 +1497,16 @@
 
             return (
                 <div className="animate-in fade-in duration-500 space-y-5 pb-32">
-                    <div className="px-2">
-                        <h1 className="text-2xl font-black">Sync <span className="text-mint-400">Hub</span></h1>
-                        <p className="text-gray-400 text-sm mt-1">Conecta tu wearable o reloj inteligente</p>
+                    <div className="px-2 flex items-center space-x-3">
+                        {setActiveTab && (
+                            <button onClick={() => setActiveTab('profile')} className="p-2 -ml-2 bg-white/5 hover:bg-white/10 rounded-xl transition-colors">
+                                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
+                            </button>
+                        )}
+                        <div>
+                            <h1 className="text-2xl font-black">Sync <span className="text-mint-400">Hub</span></h1>
+                            <p className="text-gray-400 text-sm mt-1">Conecta tu wearable o reloj inteligente</p>
+                        </div>
                     </div>
 
                     {/* Transparency Notice */}
@@ -2379,6 +2386,20 @@
                             </div>
                             <div className="flex items-center space-x-3">
                                 <span className="font-black text-beatcoin group-hover:scale-110 transition-transform">{(user?.points || 0).toLocaleString()} B</span>
+                                <svg className="w-4 h-4 text-gray-400 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
+                            </div>
+                        </div>
+                        <div onClick={() => setActiveTab('sync')} className="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 cursor-pointer transition-colors group border border-transparent hover:border-white/10">
+                            <div className="flex items-center space-x-3">
+                                <span className="text-xl">⌚</span>
+                                <span className="text-sm font-semibold group-hover:text-mint-400 transition-colors">Sincronizar Dispositivo</span>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                                {user?.connectedDevice ? (
+                                    <span className="text-[10px] font-black text-mint-400 bg-mint-500/10 px-2 py-1 rounded-lg uppercase tracking-tight">✓ {user.connectedDevice.name}</span>
+                                ) : (
+                                    <span className="text-gray-500 text-xs">Sin conectar</span>
+                                )}
                                 <svg className="w-4 h-4 text-gray-400 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
                             </div>
                         </div>
@@ -3406,7 +3427,7 @@
                             {activeTab === 'home' && <Dashboard setActiveTab={setActiveTab} />}
                             {activeTab === 'map' && <EcoMap user={user} />}
                             {activeTab === 'track' && <Tracker user={user} onUpdateUser={setUser} onConfetti={fireConfetti} />}
-                            {activeTab === 'sync' && <SyncHub user={user} onUpdateUser={setUser} />}
+                            {activeTab === 'sync' && <SyncHub user={user} onUpdateUser={setUser} setActiveTab={setActiveTab} />}
                             {activeTab === 'rewards' && <Rewards user={user} onUpdateUser={setUser} />}
                             {activeTab === 'company' && <CompanyProfile user={user} onUpdateUser={setUser} setActiveTab={setActiveTab} />}
                             {activeTab === 'business' && <BusinessPortal user={user} onUpdateUser={setUser} />}
