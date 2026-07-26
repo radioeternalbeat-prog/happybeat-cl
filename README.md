@@ -70,7 +70,7 @@ Para reconectar este repo a Netlify (deploy automático en cada push):
 ## 🔐 Notas de seguridad
 
 - La configuración de Firebase incluida en `index.html` (`apiKey`, `projectId`, etc.) corresponde a las credenciales **públicas de cliente Web** de Firebase — esto es normal y no representa una clave secreta filtrada. La seguridad real depende de las **reglas de Firestore/Auth** configuradas en la consola de Firebase del proyecto `app-happybeat`.
-- Hay una URL de ejemplo para un mapa estático (Geoapify) con el placeholder `YOUR_API_KEY_HERE` — no es una clave real, hay que reemplazarla si se quiere activar esa funcionalidad de mapa.
+- El Eco-Mapa usa una API key real de Geoapify (plan free), embebida en `index.html` como `GEOAPIFY_API_KEY`. Es una clave de uso en cliente (se usa directo en una URL de imagen de mapa estático), no una credencial secreta de backend — pero se recomienda restringirla por dominio referente en https://myprojects.geoapify.com para evitar que otros sitios la reutilicen desde fuera de `happybeat-cl.netlify.app`.
 
 ### Reglas de Firestore (`firestore.rules`)
 
@@ -92,7 +92,9 @@ Con esta regla, cada usuario autenticado solo puede leer/escribir su propio docu
 - [ ] Revisar por separado las reglas de `licenses`, `enlista` y `portfolio` (pertenecen a otros proyectos, no a Happy Beat CL).
 - [ ] Confirmar métodos de inicio de sesión habilitados en Firebase Auth (Email/Password, Google, Apple).
 - [ ] Decidir si se migra a un proyecto con build (Vite/Next.js) para mejor mantenibilidad, o se mantiene como HTML único.
-- [ ] Agregar clave real de Geoapify (o cambiar de proveedor de mapas) para activar el Eco-Mapa en vivo.
+- [x] Agregar clave real de Geoapify para activar el Eco-Mapa en vivo (hecho: el botón "Activar GPS" ahora pide la ubicación real del usuario con `navigator.geolocation` y centra el mapa ahí).
+- [ ] Restringir la API key de Geoapify por dominio en su dashboard (recomendado, no bloqueante).
+- [ ] Convertir los "Puntos Cercanos" (Punto Limpio, Ciclovía, Estación EV) de datos fijos a datos dinámicos/reales.
 - [ ] Definir mejoras/modificaciones puntuales a implementar.
 
 ---
