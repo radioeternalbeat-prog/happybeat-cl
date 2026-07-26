@@ -58,6 +58,10 @@ python3 -m http.server 8080
 
 > ⚠️ El registro del Service Worker (`/sw.js`) requiere HTTPS o `localhost` para funcionar correctamente.
 
+## 📻 Radio en vivo
+
+"Happy Harmony Radio" transmite una señal de audio real (`https://topradio.us/proxy/eternalbeat/stream`), reproducida con un elemento `<audio>` nativo (no un iframe). Se puede cambiar la URL de la señal desde el Panel de Administración → "Configuración de Radio" (debe ser una URL directa de stream Shoutcast/Icecast, no un link de YouTube).
+
 ## ☁️ Despliegue
 
 El sitio está desplegado en **Netlify**: https://happybeat-cl.netlify.app/
