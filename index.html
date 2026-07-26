@@ -237,6 +237,9 @@
             saveUser: async (user) => {
                 // For now keep local, but sync would happen here
                 const users = DB.getUsers();
+                // Codigo de invitacion propio, unico por usuario (para que
+                // pueda invitar amigos reales a la app).
+                const referralCode = 'HB' + Math.random().toString(36).substring(2, 7).toUpperCase();
                 const newUser = {
                     ...user,
                     id: Date.now(),
@@ -244,16 +247,46 @@
                     points: 100,
                     redeemed: [],
                     activities: [],
-                    isVerified: false
+                    isVerified: false,
+                    referralCode,
+                    friends: [] // emails de amigos reales que se registraron con mi codigo
                 };
+
+                // Si se registro usando el codigo de invitacion de otro usuario
+                // real, se otorga el bono de referido a ambos y se vincula la
+                // amistad (verificable, no simulada).
+                const REFERRAL_BONUS = 200;
+                if (user.referredBy) {
+                    const referrer = users.find(u => u.referralCode === user.referredBy);
+                    if (referrer && referrer.email !== newUser.email) {
+                        newUser.points += REFERRAL_BONUS;
+                        newUser.referredByEmail = referrer.email;
+                        const updatedReferrer = {
+                            ...referrer,
+                            points: (referrer.points || 0) + REFERRAL_BONUS,
+                            friends: [...(referrer.friends || []), newUser.email]
+                        };
+                        // Actualiza al referente en la lista local antes de guardar
+                        const idx = users.findIndex(u => u.email === referrer.email);
+                        if (idx !== -1) users[idx] = updatedReferrer;
+                        localStorage.setItem('hb_users', JSON.stringify(users));
+                        try {
+                            await db.collection('users').doc(referrer.email).update({
+                                points: updatedReferrer.points,
+                                friends: updatedReferrer.friends
+                            });
+                        } catch (e) { console.error('Firestore referrer update failed', e); }
+                    }
+                }
 
                 // Firestore Sync
                 try {
                     await db.collection('users').doc(user.email).set(newUser);
                 } catch (e) { console.error('Firestore save failed', e); }
 
-                users.push(newUser);
-                localStorage.setItem('hb_users', JSON.stringify(users));
+                const freshUsers = DB.getUsers();
+                freshUsers.push(newUser);
+                localStorage.setItem('hb_users', JSON.stringify(freshUsers));
                 return newUser;
             },
             updateUser: async (updatedUser) => {
@@ -566,6 +599,13 @@
             const [isRegistering, setIsRegistering] = useState(false);
             const [error, setError] = useState('');
             const [loading, setLoading] = useState(false);
+            // Codigo de invitacion detectado en la URL (?ref=HBXXXXX), si el
+            // usuario llego desde un link compartido por un amigo real.
+            const [referredBy] = useState(() => new URLSearchParams(window.location.search).get('ref'));
+
+            useEffect(() => {
+                if (referredBy) setIsRegistering(true);
+            }, []);
 
             const handleSubmit = async (e) => {
                 e.preventDefault();
@@ -586,9 +626,9 @@
                         } catch (fbErr) {
                             console.log('Firebase Auth create fallback', fbErr.code);
                         }
-                        await DB.saveUser({ email, password, name, role: 'user' });
+                        await DB.saveUser({ email, password, name, role: 'user', referredBy });
                         setIsRegistering(false);
-                        toast('¡Registro exitoso! Identifícate.', 'success');
+                        toast(referredBy ? '¡Registro exitoso! +200 Beatcoins por invitación 🎁' : '¡Registro exitoso! Identifícate.', 'success');
                     } else {
                         const user = await DB.validateUser(email, password);
                         if (user) {
@@ -665,6 +705,13 @@
                         <div className="absolute top-0 right-0 w-32 h-32 bg-mint-500/10 blur-[60px] -z-10"></div>
 
                         <h2 className="text-2xl font-bold mb-2">{isRegistering ? 'Crea tu cuenta' : 'Bienvenido de nuevo'}</h2>
+
+                        {referredBy && isRegistering && (
+                            <div className="bg-mint-500/10 border border-mint-500/30 text-mint-400 text-xs p-3 rounded-xl mb-4 flex items-center space-x-2">
+                                <span className="text-lg">🎁</span>
+                                <span>¡Te invitó un amigo! Al registrarte ganas <span className="font-black">+200 Beatcoins</span> extra.</span>
+                            </div>
+                        )}
 
                         {error && <div className="bg-red-500/10 border border-red-500/50 text-red-500 text-xs p-3 rounded-xl mb-4">{error}</div>}
 
@@ -2401,43 +2448,65 @@
 
                     {activeSubTab === 'amigos' && (
                         <div className="space-y-4">
-                            <button className="w-full border-2 border-dashed border-mint-500/30 text-mint-400 rounded-2xl p-4 font-bold hover:bg-mint-500/10 transition-colors flex items-center justify-center space-x-2">
-                                <span>+ Añadir Amigos</span>
-                            </button>
-                            
-                            <div className="space-y-3">
-                                {/* Friend 1 */}
-                                <div className="glass-card p-4 border border-white/5 flex items-center justify-between group">
-                                    <div className="flex items-center space-x-4">
-                                        <div className="relative">
-                                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Maria" className="w-12 h-12 rounded-full border-2 border-mint-500/50" alt="amigo" />
-                                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-forest-950"></div>
-                                        </div>
-                                        <div>
-                                            <h4 className="text-sm font-bold text-white">María P.</h4>
-                                            <p className="text-[10px] text-gray-400 font-medium mt-0.5">Andando en bici hace 10 min</p>
-                                        </div>
-                                    </div>
-                                    <button className="bg-white/5 hover:bg-mint-500/20 text-mint-400 p-2 rounded-xl transition-all cursor-pointer">
-                                        ⚔️ Retar
+                            {/* Codigo de invitacion real del usuario */}
+                            <div className="glass-card p-5 border-mint-500/30 bg-mint-500/5 space-y-3">
+                                <div className="flex items-center space-x-2">
+                                    <span className="text-lg">🎁</span>
+                                    <p className="text-xs font-black text-mint-400 uppercase tracking-widest">Invita amigos reales, gana Beatcoins</p>
+                                </div>
+                                <p className="text-[10px] text-gray-400 leading-relaxed">Comparte tu link de invitación. Cuando un amigo se registre con él, ambos ganan <span className="text-mint-400 font-black">+200 Beatcoins</span>.</p>
+                                <div className="bg-black/30 rounded-xl px-4 py-3 flex items-center justify-between border border-white/5">
+                                    <span className="font-mono font-black text-sm text-white">{user?.referralCode || '—'}</span>
+                                    <button
+                                        onClick={() => {
+                                            const link = `${window.location.origin}${window.location.pathname}?ref=${user?.referralCode}`;
+                                            navigator.clipboard.writeText(link);
+                                            addToast('¡Link de invitación copiado! 📋', 'success');
+                                        }}
+                                        className="text-[10px] font-black text-mint-400 uppercase hover:text-mint-300"
+                                    >
+                                        Copiar link
                                     </button>
                                 </div>
+                                <button
+                                    onClick={() => {
+                                        const link = `${window.location.origin}${window.location.pathname}?ref=${user?.referralCode}`;
+                                        const msg = `¡Únete a Happy Beat CL conmigo! 🌱🎧 Registra tus actividades sostenibles, gana Beatcoins y canjea premios reales. Usa mi link para que ambos ganemos un bono: ${link}`;
+                                        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+                                    }}
+                                    className="w-full flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-500 text-white py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95"
+                                >
+                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.149-.15.3-.347.44-.52.15-.174.2-.298.3-.497.099-.198.05-.371-.05-.52-.099-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.363.709.306 1.262.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347" /><path d="M12 0C5.373 0 0 5.373 0 12c0 2.121.553 4.113 1.523 5.845L0 24l6.335-1.663A11.94 11.94 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.94a9.9 9.9 0 01-5.05-1.383l-.362-.216-3.75.984 1.001-3.653-.236-.375A9.9 9.9 0 012.06 12C2.06 6.514 6.514 2.06 12 2.06S21.94 6.514 21.94 12 17.486 21.94 12 21.94z" /></svg>
+                                    <span>Invitar por WhatsApp</span>
+                                </button>
+                            </div>
 
-                                {/* Friend 2 */}
-                                <div className="glass-card p-4 border border-white/5 flex items-center justify-between group">
-                                    <div className="flex items-center space-x-4">
-                                        <div className="relative">
-                                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Juan" className="w-12 h-12 rounded-full border-2 border-white/10 grayscale" alt="amigo" />
-                                        </div>
-                                        <div>
-                                            <h4 className="text-sm font-bold text-white">Juan C.</h4>
-                                            <p className="text-[10px] text-gray-500 font-medium">Ahorró 2.5kg CO2 hoy</p>
-                                        </div>
+                            <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">
+                                Mis amigos ({(user?.friends || []).length})
+                            </h3>
+
+                            <div className="space-y-3">
+                                {(user?.friends || []).length === 0 ? (
+                                    <div className="glass-card p-8 text-center border-white/5">
+                                        <span className="text-3xl block mb-3 opacity-30">👥</span>
+                                        <p className="text-gray-500 text-xs italic">Aún no tienes amigos registrados con tu código. ¡Comparte tu link de invitación!</p>
                                     </div>
-                                    <button className="bg-white/5 hover:bg-mint-500/20 text-mint-400 p-2 rounded-xl transition-all cursor-pointer">
-                                        ⚔️ Retar
-                                    </button>
-                                </div>
+                                ) : (
+                                    DB.getUsers().filter(u => (user?.friends || []).includes(u.email)).map(friend => {
+                                        const friendCO2 = (friend.activities || []).reduce((a, b) => a + Number(b.savings), 0);
+                                        return (
+                                            <div key={friend.email} className="glass-card p-4 border border-white/5 flex items-center justify-between group">
+                                                <div className="flex items-center space-x-4">
+                                                    <img src={friend.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${friend.name || friend.email}`} className="w-12 h-12 rounded-full border-2 border-mint-500/50" alt="amigo" />
+                                                    <div>
+                                                        <h4 className="text-sm font-bold text-white">{friend.name || friend.email.split('@')[0]}</h4>
+                                                        <p className="text-[10px] text-gray-400 font-medium mt-0.5">{friendCO2.toFixed(1)} kg CO2 ahorrados en total</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
                             </div>
                         </div>
                     )}
