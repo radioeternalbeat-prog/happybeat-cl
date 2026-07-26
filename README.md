@@ -33,7 +33,7 @@ Esto significa:
 
 ## ✨ Funcionalidades principales (detectadas en el código)
 
-- **Autenticación**: login/registro de usuarios con email y contraseña (Firebase Auth + fallback local con `localStorage`). Los botones de "Google" y "Apple" que aparecían en el login eran solo decorativos (sin `onClick`, sin proveedor real conectado) y se eliminaron para no confundir a los usuarios.
+- **Autenticación**: login/registro de usuarios con email y contraseña, y login real con **Google** (Firebase Auth, `signInWithPopup` + `GoogleAuthProvider`), más fallback local con `localStorage`. El botón de "Apple" se eliminó: no está configurado como proveedor en Firebase Authentication (requiere cuenta de Apple Developer de pago).
 - **Dashboard** principal con estadísticas.
 - **Eco-Mapa**: puntos sostenibles cercanos (puntos limpios, ciclovías, estaciones de carga EV).
 - **Tracker**: registro de actividades sostenibles.
