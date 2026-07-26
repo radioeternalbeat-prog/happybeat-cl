@@ -128,6 +128,8 @@
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Escaner QR real (camara del dispositivo) -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
@@ -1427,46 +1429,60 @@
         const SyncHub = ({ user, onUpdateUser, setActiveTab }) => {
             const toast = useToast();
             const [activeSection, setActiveSection] = useState('devices');
-            const [mode, setMode] = useState('none');
-            const [scanning, setScanning] = useState(false);
-            const [foundDevices, setFoundDevices] = useState([]);
+            const [scanState, setScanState] = useState('idle'); // idle | starting | scanning | error
             const [connectedDevice, setConnectedDevice] = useState(user?.connectedDevice || null);
-            const [qrStep, setQrStep] = useState('scan');
-            const [connectedApps, setConnectedApps] = useState(user?.connectedApps || {
-                apple: false, google: false, strava: false, garmin: false, polar: false, whoop: false, instagram: false, facebook: false
-            });
+            const qrRegionId = 'qr-reader-region';
+            const html5QrRef = React.useRef(null);
 
-            const DEVICE_BRANDS = [
-                { brand: 'Apple Watch', icon: '⌚', color: 'from-gray-700 to-gray-900', badge: 'bg-gray-600', protocol: 'BLE 5.3' },
-                { brand: 'Galaxy Watch', icon: '🔵', color: 'from-blue-800 to-blue-950', badge: 'bg-blue-700', protocol: 'BLE 5.0' },
-                { brand: 'Garmin', icon: '🟢', color: 'from-green-800 to-green-950', badge: 'bg-green-700', protocol: 'ANT+/BLE' },
-                { brand: 'Fitbit', icon: '🟣', color: 'from-purple-700 to-purple-950', badge: 'bg-purple-600', protocol: 'BLE 5.0' },
-                { brand: 'Mi Band', icon: '🔴', color: 'from-orange-700 to-red-900', badge: 'bg-orange-600', protocol: 'BLE 5.1' },
-                { brand: 'Huawei Band', icon: '🟡', color: 'from-yellow-700 to-amber-900', badge: 'bg-yellow-600', protocol: 'BLE 5.2' },
-                { brand: 'Polar', icon: '🟠', color: 'from-red-700 to-rose-900', badge: 'bg-red-600', protocol: 'ANT+/BLE' },
-                { brand: 'WHOOP 4.0', icon: '⚡', color: 'from-slate-700 to-slate-900', badge: 'bg-slate-600', protocol: 'BLE 5.0' },
-            ];
-
-            const MOCK_DEVICES = [
-                { id: 'a1', name: 'Apple Watch S9', brand: 'Apple', rssi: -42, battery: 87 },
-                { id: 'a2', name: 'Galaxy Watch 6', brand: 'Samsung', rssi: -58, battery: 64 },
-                { id: 'a3', name: 'Mi Band 8 Pro', brand: 'Xiaomi', rssi: -71, battery: 93 },
-                { id: 'a4', name: 'Charge 6', brand: 'Fitbit', rssi: -65, battery: 52 },
-            ];
-
-            const rssiToBars = (rssi) => rssi > -50 ? 4 : rssi > -60 ? 3 : rssi > -70 ? 2 : 1;
-
-            const startBluetoothScan = () => {
-                setMode('bluetooth'); setScanning(true); setFoundDevices([]);
-                setTimeout(() => { setFoundDevices(MOCK_DEVICES); setScanning(false); }, 3500);
+            // Detiene y libera la camara de forma segura (llamar siempre antes
+            // de desmontar o cambiar de vista, para no dejar la camara prendida
+            // en segundo plano).
+            const stopScanner = () => {
+                if (html5QrRef.current) {
+                    html5QrRef.current.stop().catch(() => {}).finally(() => {
+                        html5QrRef.current.clear();
+                        html5QrRef.current = null;
+                    });
+                }
             };
 
-            const connectDevice = (device) => {
-                const dev = { name: device.name, brand: device.brand, battery: device.battery, connectedAt: new Date().toISOString() };
-                setConnectedDevice(dev);
-                const updated = { ...user, connectedDevice: dev };
-                DB.updateUser(updated); onUpdateUser(updated); setMode('none');
-                toast(`¡${device.name} conectado! 🎉`, 'success');
+            useEffect(() => stopScanner, []);
+
+            const startQrScan = () => {
+                if (typeof Html5Qrcode === 'undefined') {
+                    toast('No se pudo cargar el escáner de cámara. Revisa tu conexión.', 'error');
+                    return;
+                }
+                setScanState('starting');
+                const html5QrCode = new Html5Qrcode(qrRegionId);
+                html5QrRef.current = html5QrCode;
+
+                html5QrCode.start(
+                    { facingMode: 'environment' }, // camara trasera del celular
+                    { fps: 10, qrbox: { width: 230, height: 230 } },
+                    (decodedText) => {
+                        // Codigo QR real detectado por la camara del dispositivo
+                        stopScanner();
+                        setScanState('idle');
+                        const dev = { name: decodedText.slice(0, 40), source: 'qr', connectedAt: new Date().toISOString() };
+                        setConnectedDevice(dev);
+                        const updated = { ...user, connectedDevice: dev };
+                        DB.updateUser(updated); onUpdateUser(updated);
+                        toast('¡QR escaneado y conectado! 🚲', 'success');
+                    },
+                    () => { /* frame sin QR detectado: normal, se ignora */ }
+                ).then(() => {
+                    setScanState('scanning');
+                }).catch((err) => {
+                    console.error('No se pudo iniciar la cámara', err);
+                    setScanState('error');
+                    toast('No se pudo acceder a la cámara. Revisa los permisos del navegador.', 'error');
+                });
+            };
+
+            const cancelQrScan = () => {
+                stopScanner();
+                setScanState('idle');
             };
 
             const disconnectDevice = () => {
@@ -1476,65 +1492,36 @@
                 toast('Dispositivo desconectado', 'info');
             };
 
-            const connectByQR = () => { setQrStep('scan'); setMode('qr'); setTimeout(() => setQrStep('success'), 4000); };
-
-            const confirmQR = () => {
-                const dev = { name: 'Bicicleta QR-8831', brand: 'HappyBeat Station', battery: 100, connectedAt: new Date().toISOString() };
-                setConnectedDevice(dev);
-                const updated = { ...user, connectedDevice: dev };
-                DB.updateUser(updated); onUpdateUser(updated); setMode('none');
-                toast('¡Estación conectada por QR! 🚲', 'success');
-            };
-
-            const toggleApp = (appId) => {
-                const newApps = { ...connectedApps, [appId]: !connectedApps[appId] };
-                setConnectedApps(newApps);
-                const isNowVerified = newApps.instagram || newApps.facebook;
-                const updated = { ...user, connectedApps: newApps, isVerified: isNowVerified };
-                DB.updateUser(updated); onUpdateUser(updated);
-                toast(newApps[appId] ? `Conectado a ${appId} ✓` : `${appId} desconectado`, newApps[appId] ? 'success' : 'info');
-            };
-
             return (
                 <div className="animate-in fade-in duration-500 space-y-5 pb-32">
                     <div className="px-2 flex items-center space-x-3">
                         {setActiveTab && (
-                            <button onClick={() => setActiveTab('profile')} className="p-2 -ml-2 bg-white/5 hover:bg-white/10 rounded-xl transition-colors">
+                            <button onClick={() => { stopScanner(); setActiveTab('profile'); }} className="p-2 -ml-2 bg-white/5 hover:bg-white/10 rounded-xl transition-colors">
                                 <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
                             </button>
                         )}
                         <div>
                             <h1 className="text-2xl font-black">Sync <span className="text-mint-400">Hub</span></h1>
-                            <p className="text-gray-400 text-sm mt-1">Conecta tu wearable o reloj inteligente</p>
-                        </div>
-                    </div>
-
-                    {/* Transparency Notice */}
-                    <div className="bg-beatcoin/5 border border-beatcoin/20 rounded-2xl p-4 flex items-start space-x-3">
-                        <span className="text-lg mt-0.5">🧪</span>
-                        <div>
-                            <p className="text-[11px] text-beatcoin font-bold">Modo Demo · Integración en desarrollo</p>
-                            <p className="text-[10px] text-gray-400 mt-0.5 leading-relaxed">Las conexiones Bluetooth y QR son simuladas. La integración con APIs reales de wearables está en desarrollo para la v2.0. Mientras tanto, registra tus actividades manualmente desde <span className="text-mint-400 font-bold">Track</span>.</p>
+                            <p className="text-gray-400 text-sm mt-1">Conecta estaciones y bicicletas reales</p>
                         </div>
                     </div>
 
                     {connectedDevice && (
                         <div className="bg-mint-500/10 border border-mint-500/30 rounded-3xl p-4 flex items-center justify-between animate-in slide-in-from-top duration-400">
                             <div className="flex items-center space-x-3">
-                                <div className="w-10 h-10 bg-mint-500/20 rounded-2xl flex items-center justify-center text-xl">⌚</div>
+                                <div className="w-10 h-10 bg-mint-500/20 rounded-2xl flex items-center justify-center text-xl">🚲</div>
                                 <div>
-                                    <p className="text-[10px] text-mint-400 font-black uppercase tracking-widest">Dispositivo activo</p>
-                                    <p className="font-bold text-white text-sm">{connectedDevice.name}</p>
-                                    <p className="text-[10px] text-gray-400">{connectedDevice.brand} · 🔋 {connectedDevice.battery}%</p>
+                                    <p className="text-[10px] text-mint-400 font-black uppercase tracking-widest">Estación activa</p>
+                                    <p className="font-bold text-white text-sm break-all">{connectedDevice.name}</p>
                                 </div>
                             </div>
-                            <button onClick={disconnectDevice} className="text-red-400 text-[10px] font-black uppercase tracking-wider bg-red-500/10 px-3 py-1.5 rounded-xl hover:text-red-300 transition-colors">Desconectar</button>
+                            <button onClick={disconnectDevice} className="text-red-400 text-[10px] font-black uppercase tracking-wider bg-red-500/10 px-3 py-1.5 rounded-xl hover:text-red-300 transition-colors flex-shrink-0">Desconectar</button>
                         </div>
                     )}
 
                     <div className="flex bg-white/5 rounded-2xl p-1 gap-1">
-                        {[{ id: 'devices', label: '⌚ Dispositivos' }, { id: 'apps', label: '📱 Apps Salud' }, { id: 'identity', label: '🆔 Identidad' }].map(tab => (
-                            <button key={tab.id} onClick={() => setActiveSection(tab.id)}
+                        {[{ id: 'devices', label: '📷 Escanear QR' }, { id: 'identity', label: '🆔 Identidad' }].map(tab => (
+                            <button key={tab.id} onClick={() => { stopScanner(); setScanState('idle'); setActiveSection(tab.id); }}
                                 className={`flex-1 py-2 rounded-xl text-[11px] font-black transition-all ${activeSection === tab.id ? 'bg-mint-500 text-forest-950' : 'text-gray-400 hover:text-white'}`}>
                                 {tab.label}
                             </button>
@@ -1543,170 +1530,49 @@
 
                     {activeSection === 'devices' && (
                         <div className="space-y-5 animate-in fade-in duration-300">
-                            {mode === 'none' && (
-                                <>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <button onClick={startBluetoothScan} className="glass-card p-5 flex flex-col items-center space-y-3 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all group">
-                                            <div className="w-14 h-14 bg-blue-500/20 rounded-2xl flex items-center justify-center group-hover:bg-blue-500/30 transition-colors shadow-[0_0_20px_rgba(59,130,246,0.2)]">
-                                                <svg className="w-7 h-7 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
-                                                </svg>
-                                            </div>
-                                            <div className="text-center">
-                                                <p className="font-black text-sm text-white">Bluetooth</p>
-                                                <p className="text-[10px] text-gray-500">Automático · BLE 5.x</p>
-                                            </div>
-                                        </button>
-                                        <button onClick={connectByQR} className="glass-card p-5 flex flex-col items-center space-y-3 hover:border-mint-500/50 hover:bg-mint-500/5 transition-all group">
-                                            <div className="w-14 h-14 bg-mint-500/20 rounded-2xl flex items-center justify-center group-hover:bg-mint-500/30 transition-colors shadow-[0_0_20px_rgba(17,212,66,0.2)]">
-                                                <svg className="w-7 h-7 text-mint-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                                                </svg>
-                                            </div>
-                                            <div className="text-center">
-                                                <p className="font-black text-sm text-white">Código QR</p>
-                                                <p className="text-[10px] text-gray-500">Estaciones · Bicicletas</p>
-                                            </div>
-                                        </button>
-                                    </div>
+                            <div className="glass-card p-6 text-center space-y-5">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="font-black text-base">Escanear Código QR</h3>
+                                    {scanState === 'scanning' && (
+                                        <button onClick={cancelQrScan} className="text-gray-500 text-[10px] uppercase hover:text-white transition-colors">✕ Cerrar cámara</button>
+                                    )}
+                                </div>
+
+                                {scanState === 'idle' || scanState === 'error' ? (
+                                    <>
+                                        <div className="w-20 h-20 mx-auto bg-mint-500/20 rounded-full flex items-center justify-center border-2 border-mint-500/30">
+                                            <svg className="w-9 h-9 text-mint-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                                            </svg>
+                                        </div>
+                                        <p className="text-xs text-gray-400">Usa la cámara real de tu celular para escanear el QR de una <span className="text-mint-400 font-bold">estación HappyBeat</span> o <span className="text-mint-400 font-bold">bicicleta</span> física.</p>
+                                        {scanState === 'error' && (
+                                            <p className="text-[10px] text-red-400">No se pudo acceder a la cámara. Verifica los permisos del navegador e intenta de nuevo.</p>
+                                        )}
+                                        <button onClick={startQrScan} className="btn-primary w-full">📷 Activar Cámara</button>
+                                    </>
+                                ) : (
                                     <div className="space-y-3">
-                                        <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Marcas compatibles</h3>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            {DEVICE_BRANDS.map((d, i) => (
-                                                <div key={i} className={`bg-gradient-to-br ${d.color} rounded-2xl p-3 flex items-center space-x-2.5 border border-white/5`}>
-                                                    <div className={`w-8 h-8 ${d.badge} rounded-xl flex items-center justify-center text-base`}>{d.icon}</div>
-                                                    <div className="min-w-0">
-                                                        <p className="text-white font-black text-xs truncate">{d.brand}</p>
-                                                        <p className="text-gray-400 text-[9px] truncate">{d.protocol}</p>
-                                                    </div>
-                                                </div>
-                                            ))}
+                                        <div id={qrRegionId} className="w-full rounded-2xl overflow-hidden border-2 border-mint-500/30 bg-black min-h-[250px] flex items-center justify-center">
+                                            {scanState === 'starting' && <p className="text-xs text-gray-500">Solicitando acceso a la cámara...</p>}
                                         </div>
-                                    </div>
-                                </>
-                            )}
-
-                            {mode === 'bluetooth' && (
-                                <div className="animate-in slide-in-from-bottom duration-400">
-                                    <div className="glass-card p-6 text-center space-y-5">
-                                        <div className="flex items-center justify-between">
-                                            <h3 className="font-black text-base">Escaneo Bluetooth</h3>
-                                            <button onClick={() => { setMode('none'); setFoundDevices([]); }} className="text-gray-500 text-[10px] uppercase hover:text-white transition-colors">✕ Cerrar</button>
-                                        </div>
-                                        <div className="relative w-44 h-44 mx-auto flex items-center justify-center">
-                                            <div className="absolute inset-0 rounded-full border border-blue-500/10"></div>
-                                            <div className="absolute inset-6 rounded-full border border-blue-500/15"></div>
-                                            <div className="absolute inset-12 rounded-full border border-blue-500/20"></div>
-                                            {scanning && <>
-                                                <div className="absolute inset-0 rounded-full border-2 border-blue-500/40 animate-ping"></div>
-                                                <div className="absolute inset-8 rounded-full border border-blue-400/30 animate-ping" style={{ animationDelay: '0.6s' }}></div>
-                                            </>}
-                                            <div className="relative z-10 w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.6)]">
-                                                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
-                                                </svg>
-                                            </div>
-                                        </div>
-                                        <p className="text-xs text-gray-400">{scanning ? '🔍 Buscando dispositivos cercanos...' : `${foundDevices.length} dispositivo(s) encontrado(s)`}</p>
-                                        {foundDevices.length > 0 && (
-                                            <div className="space-y-2 text-left">
-                                                {foundDevices.map(d => (
-                                                    <div key={d.id} className="bg-white/5 border border-white/10 rounded-2xl p-3 flex items-center justify-between animate-in slide-in-from-left duration-300">
-                                                        <div className="flex items-center space-x-3">
-                                                            <div className="w-9 h-9 bg-blue-500/20 rounded-xl flex items-center justify-center text-base">⌚</div>
-                                                            <div>
-                                                                <p className="font-bold text-sm text-white">{d.name}</p>
-                                                                <div className="flex items-center space-x-2 mt-0.5">
-                                                                    <p className="text-[9px] text-gray-500">{d.brand}</p>
-                                                                    <div className="flex items-end space-x-0.5">
-                                                                        {[1, 2, 3, 4].map(b => (
-                                                                            <div key={b} className={`w-1 rounded-sm ${b <= rssiToBars(d.rssi) ? 'bg-mint-500' : 'bg-gray-700'}`} style={{ height: `${4 + b * 2}px` }}></div>
-                                                                        ))}
-                                                                    </div>
-                                                                    <span className="text-[9px] text-gray-500">🔋{d.battery}%</span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <button onClick={() => connectDevice(d)} className="bg-mint-500 text-forest-950 text-[10px] font-black px-3 py-1.5 rounded-xl hover:bg-mint-400 transition-colors active:scale-95">CONECTAR</button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                        <button onClick={startBluetoothScan} disabled={scanning} className="w-full py-2.5 bg-blue-600/20 border border-blue-500/30 rounded-2xl text-blue-400 text-xs font-black uppercase tracking-widest hover:bg-blue-600/30 transition-all disabled:opacity-50">
-                                            {scanning ? '⏳ Escaneando...' : '🔄 Volver a Escanear'}
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-
-                            {mode === 'qr' && (
-                                <div className="animate-in slide-in-from-bottom duration-400">
-                                    <div className="glass-card p-6 text-center space-y-5">
-                                        <div className="flex items-center justify-between">
-                                            <h3 className="font-black text-base">Escanear QR</h3>
-                                            <button onClick={() => { setMode('none'); setQrStep('scan'); }} className="text-gray-500 text-[10px] uppercase hover:text-white">✕ Cerrar</button>
-                                        </div>
-                                        {qrStep === 'scan' ? (
-                                            <>
-                                                <div className="relative w-56 h-56 mx-auto bg-black/60 rounded-3xl border-2 border-mint-500/30 overflow-hidden">
-                                                    <div className="absolute top-3 left-3 w-8 h-8 border-t-4 border-l-4 border-mint-500 rounded-tl-xl"></div>
-                                                    <div className="absolute top-3 right-3 w-8 h-8 border-t-4 border-r-4 border-mint-500 rounded-tr-xl"></div>
-                                                    <div className="absolute bottom-3 left-3 w-8 h-8 border-b-4 border-l-4 border-mint-500 rounded-bl-xl"></div>
-                                                    <div className="absolute bottom-3 right-3 w-8 h-8 border-b-4 border-r-4 border-mint-500 rounded-br-xl"></div>
-                                                    <div className="absolute top-0 left-0 w-full h-0.5 bg-mint-500 shadow-[0_0_12px_#11d442] animate-scan"></div>
-                                                    <div className="absolute inset-0 flex items-center justify-center opacity-10">
-                                                        <svg className="w-24 h-24 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
-                                                    </div>
-                                                </div>
-                                                <p className="text-xs text-gray-400">Apunta la cámara al QR de la <span className="text-mint-400 font-bold">estación HappyBeat</span> o tu <span className="text-mint-400 font-bold">bicicleta inteligente</span></p>
-                                                <div className="flex items-center justify-center space-x-2 text-[10px] text-gray-500">
-                                                    <div className="w-2 h-2 bg-mint-500 rounded-full animate-pulse"></div>
-                                                    <span>Detectando código QR...</span>
-                                                </div>
-                                            </>
-                                        ) : (
-                                            <div className="space-y-4 animate-in zoom-in duration-400">
-                                                <div className="w-20 h-20 mx-auto bg-mint-500/20 rounded-full flex items-center justify-center border-2 border-mint-500/40 shadow-[0_0_30px_rgba(17,212,66,0.3)]">
-                                                    <span className="text-4xl">✅</span>
-                                                </div>
-                                                <div>
-                                                    <p className="font-black text-mint-400 text-lg">¡QR Detectado!</p>
-                                                    <p className="text-sm text-gray-300">Bicicleta HappyBeat <span className="font-black">#8831</span></p>
-                                                    <p className="text-[10px] text-gray-500 mt-1">Estación · Plaza Maipú · Santiago</p>
-                                                </div>
-                                                <button onClick={confirmQR} className="btn-primary w-full">Confirmar Conexión 🚲</button>
+                                        {scanState === 'scanning' && (
+                                            <div className="flex items-center justify-center space-x-2 text-[10px] text-gray-500">
+                                                <div className="w-2 h-2 bg-mint-500 rounded-full animate-pulse"></div>
+                                                <span>Apunta la cámara al código QR...</span>
                                             </div>
                                         )}
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                    )}
+                                )}
+                            </div>
 
-                    {activeSection === 'apps' && (
-                        <div className="space-y-3 animate-in fade-in duration-300">
-                            <p className="text-xs text-gray-500 ml-1">Sincroniza tus actividades con estas plataformas:</p>
-                            {[
-                                { id: 'apple', name: 'Apple Health', sub: 'iPhone · Health Kit', icon: '🍎', color: 'bg-gray-700' },
-                                { id: 'google', name: 'Google Fit', sub: 'Android · Wear OS', icon: '👟', color: 'bg-blue-700' },
-                                { id: 'strava', name: 'Strava', sub: 'Rutas y entrenamientos', icon: '🚲', color: 'bg-orange-600' },
-                                { id: 'garmin', name: 'Garmin Connect', sub: 'GPS · Wearables', icon: '🗺️', color: 'bg-blue-800' },
-                                { id: 'polar', name: 'Polar Flow', sub: 'FC · Zonas cardíacas', icon: '❤️', color: 'bg-red-700' },
-                                { id: 'whoop', name: 'WHOOP', sub: 'Recuperación · Sleep', icon: '⚡', color: 'bg-slate-700' },
-                            ].map(app => (
-                                <div key={app.id} className="glass-card p-4 flex items-center justify-between border-white/5 hover:border-mint-500/20 transition-colors">
-                                    <div className="flex items-center space-x-4">
-                                        <div className={`w-11 h-11 ${app.color} rounded-2xl flex items-center justify-center text-xl shadow-lg`}>{app.icon}</div>
-                                        <div>
-                                            <p className="font-black text-sm text-white">{app.name}</p>
-                                            <p className="text-[10px] text-gray-500">{app.sub}</p>
-                                        </div>
-                                    </div>
-                                    <div onClick={() => toggleApp(app.id)} className={`w-12 h-6 rounded-full relative transition-all cursor-pointer ${connectedApps[app.id] ? 'bg-mint-500 shadow-[0_0_10px_rgba(17,212,66,0.4)]' : 'bg-white/10'}`}>
-                                        <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${connectedApps[app.id] ? 'left-7' : 'left-1'}`}></div>
-                                    </div>
+                            <div className="bg-beatcoin/5 border border-beatcoin/20 rounded-2xl p-4 flex items-start space-x-3">
+                                <span className="text-lg mt-0.5">🗺️</span>
+                                <div>
+                                    <p className="text-[11px] text-beatcoin font-bold">Próximamente: wearables y apps de salud</p>
+                                    <p className="text-[10px] text-gray-400 mt-0.5 leading-relaxed">La conexión directa con relojes inteligentes (Apple Watch, Garmin, etc.) y apps como Strava o Google Fit requiere un backend propio para manejar sus credenciales de forma segura, y está planificada para una futura versión. Mientras tanto, registra tus actividades manualmente desde <span className="text-mint-400 font-bold">Track</span>, o usa el escáner QR de arriba para conectar estaciones y bicicletas físicas reales de Happy Beat.</p>
                                 </div>
-                            ))}
+                            </div>
                         </div>
                     )}
 
@@ -1752,40 +1618,32 @@
                                     <div className="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center text-xl">🆔</div>
                                     <div>
                                         <p className="font-black text-sm">Verificación de Identidad</p>
-                                        <p className="text-[10px] text-gray-500">Obtén el Blue-Check global</p>
+                                        <p className="text-[10px] text-gray-500">
+                                            {user?.isVerified ? 'Tu identidad ya fue verificada' : user?.identityDocPending ? 'Documento recibido, en revisión' : 'Sube tu documento para revisión manual'}
+                                        </p>
                                     </div>
                                 </div>
                                 <label className="cursor-pointer">
-                                    <input type="file" className="hidden" onChange={() => {
-                                        toast('Analizando documento...', 'info');
-                                        setTimeout(() => {
-                                            const updated = { ...user, isVerified: true };
-                                            DB.updateUser(updated); onUpdateUser(updated);
-                                            toast('¡Identidad verificada! Blue-Check activado ✓', 'success');
-                                        }, 2500);
+                                    <input type="file" accept="image/*,.pdf" className="hidden" disabled={user?.isVerified || user?.identityDocPending} onChange={(e) => {
+                                        const file = e.target.files[0];
+                                        if (!file) return;
+                                        // Aqui solo se registra que el documento fue recibido. No existe
+                                        // ninguna validacion automatica real de identidad en este HTML
+                                        // publico (no tiene backend propio) -- la revision debe hacerla
+                                        // un administrador manualmente desde el Panel de Admin.
+                                        const updated = { ...user, identityDocPending: true, identityDocName: file.name };
+                                        DB.updateUser(updated); onUpdateUser(updated);
+                                        toast('Documento recibido. Un administrador revisará tu solicitud manualmente.', 'info');
                                     }} />
-                                    <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${user?.isVerified ? 'bg-mint-500/20 text-mint-400 cursor-default' : 'bg-blue-600 text-white hover:scale-105 shadow-lg shadow-blue-500/30'}`}>
-                                        {user?.isVerified ? '✓ Completado' : 'Subir DNI'}
+                                    <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${user?.isVerified ? 'bg-mint-500/20 text-mint-400 cursor-default' : user?.identityDocPending ? 'bg-beatcoin/20 text-beatcoin cursor-default' : 'bg-blue-600 text-white hover:scale-105 shadow-lg shadow-blue-500/30'}`}>
+                                        {user?.isVerified ? '✓ Completado' : user?.identityDocPending ? '⏳ En revisión' : 'Subir Documento'}
                                     </div>
                                 </label>
                             </div>
-                            {[
-                                { id: 'instagram', name: 'Instagram', sub: 'Verifica con @handle', icon: '📸', color: 'bg-gradient-to-tr from-yellow-500 via-pink-500 to-purple-600' },
-                                { id: 'facebook', name: 'Facebook', sub: 'Verifica con tu perfil', icon: '👥', color: 'bg-blue-600' }
-                            ].map(app => (
-                                <div key={app.id} className="glass-card p-4 flex items-center justify-between border-white/5">
-                                    <div className="flex items-center space-x-4">
-                                        <div className={`w-10 h-10 ${app.color} rounded-xl flex items-center justify-center text-xl shadow-lg`}>{app.icon}</div>
-                                        <div>
-                                            <p className="font-black text-sm">{app.name}</p>
-                                            <p className="text-[10px] text-gray-500">{app.sub}</p>
-                                        </div>
-                                    </div>
-                                    <div onClick={() => toggleApp(app.id)} className={`w-12 h-6 rounded-full relative transition-all cursor-pointer ${connectedApps[app.id] ? 'bg-mint-500 shadow-[0_0_10px_rgba(17,212,66,0.4)]' : 'bg-white/10'}`}>
-                                        <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${connectedApps[app.id] ? 'left-7' : 'left-1'}`}></div>
-                                    </div>
-                                </div>
-                            ))}
+                            <div className="bg-beatcoin/5 border border-beatcoin/20 rounded-2xl p-4 flex items-start space-x-3">
+                                <span className="text-lg mt-0.5">ℹ️</span>
+                                <p className="text-[10px] text-gray-400 leading-relaxed">La verificación de identidad (Blue-Check) es revisada manualmente por el equipo de Happy Beat CL, no de forma automática. Los tiempos de revisión pueden variar.</p>
+                            </div>
                         </div>
                     )}
                 </div>
@@ -2512,6 +2370,55 @@
                                     </button>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <div className="glass-card overflow-hidden">
+                        <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
+                            <h3 className="font-bold text-sm tracking-widest uppercase text-blue-400">Verificaciones de Identidad Pendientes</h3>
+                            <span className="bg-blue-500/20 text-blue-400 text-[10px] font-black px-2 py-1 rounded-full">{users.filter(u => u.identityDocPending && !u.isVerified).length} PENDIENTES</span>
+                        </div>
+                        <div className="divide-y divide-white/5 max-h-[300px] overflow-y-auto">
+                            {users.filter(u => u.identityDocPending && !u.isVerified).map(u => (
+                                <div key={'id-' + u.id} className="p-6 flex items-center justify-between hover:bg-white/5 transition-colors">
+                                    <div className="flex items-center space-x-4">
+                                        <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
+                                            <span className="text-xl">🆔</span>
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-sm">{u.name || u.email}</h4>
+                                            <p className="text-xs text-gray-500">Documento: {u.identityDocName || 'archivo sin nombre'}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <button
+                                            onClick={() => {
+                                                const updated = { ...u, isVerified: true, identityDocPending: false };
+                                                DB.updateUser(updated); setUsers(DB.getUsers());
+                                                addToast(`Identidad de ${u.name || u.email} aprobada`, 'success');
+                                            }}
+                                            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-mint-500/10 text-mint-500 hover:bg-mint-500/20 transition-colors"
+                                        >
+                                            Aprobar
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                const updated = { ...u, identityDocPending: false };
+                                                DB.updateUser(updated); setUsers(DB.getUsers());
+                                                addToast(`Solicitud de ${u.name || u.email} rechazada`, 'error');
+                                            }}
+                                            className="px-3 py-1.5 rounded-xl text-xs font-bold bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+                                        >
+                                            Rechazar
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                            {users.filter(u => u.identityDocPending && !u.isVerified).length === 0 && (
+                                <div className="p-8 text-center">
+                                    <p className="text-gray-500 text-sm">No hay solicitudes de verificación pendientes.</p>
+                                </div>
+                            )}
                         </div>
                     </div>
 
