@@ -1259,7 +1259,7 @@
         };
 
         const SyncHub = ({ user, onUpdateUser }) => {
-            const { toast } = useToast();
+            const toast = useToast();
             const [activeSection, setActiveSection] = useState('devices');
             const [mode, setMode] = useState('none');
             const [scanning, setScanning] = useState(false);
