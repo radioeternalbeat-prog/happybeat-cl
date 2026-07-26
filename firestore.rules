@@ -8,7 +8,25 @@ service cloud.firestore {
     // denegaba TODO acceso por defecto (comportamiento seguro pero roto:
     // la app nunca lograba sincronizar datos en la nube, solo localStorage).
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.token.email == userId;
+      // Lectura: cualquier usuario autenticado puede leer el perfil de
+      // cualquier otro (necesario para el Feed Social real y el Ranking
+      // global de la Comunidad, que muestran actividades de TODOS los
+      // usuarios, no solo el propio).
+      allow read: if request.auth != null;
+      // Escritura: cada usuario solo puede modificar su propio documento.
+      allow write: if request.auth != null && request.auth.token.email == userId;
+    }
+
+    // Likes reales del Feed Social (Comunidad). Doc con ID autogenerado,
+    // campos: { postId, userEmail, createdAt }. Cualquiera autenticado
+    // puede leer (para contar likes de todos), pero solo puede crear/borrar
+    // SU PROPIO like (no puede dar like en nombre de otro usuario, ni
+    // borrar el like de otra persona).
+    match /postLikes/{likeId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.userEmail == request.auth.token.email;
+      allow delete: if request.auth != null && resource.data.userEmail == request.auth.token.email;
+      allow update: if false;
     }
 
     // --- Reglas preexistentes de otros proyectos (sin modificar) ---

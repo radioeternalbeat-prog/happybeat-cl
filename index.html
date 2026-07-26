@@ -2014,50 +2014,119 @@
                 }
             }[lang];
 
+            const [loadingFeed, setLoadingFeed] = useState(true);
+            const [realUsers, setRealUsers] = useState([]);
+            const [likesMap, setLikesMap] = useState({}); // postId -> [emails que dieron like]
+
+            // Trae TODOS los usuarios reales desde Firestore (no solo el
+            // propio), para armar un feed compartido de verdad entre
+            // dispositivos distintos. Si Firestore falla (offline, reglas
+            // no publicadas aun, etc.) cae de vuelta a los usuarios locales
+            // de este dispositivo, para no dejar la pantalla en blanco.
+            useEffect(() => {
+                let isMounted = true;
+                (async () => {
+                    try {
+                        const snap = await db.collection('users').get();
+                        const usersFromCloud = snap.docs.map(d => d.data());
+                        if (isMounted) setRealUsers(usersFromCloud.length > 0 ? usersFromCloud : DB.getUsers());
+                    } catch (e) {
+                        console.error('No se pudo cargar el feed real desde Firestore, usando datos locales', e);
+                        if (isMounted) setRealUsers(DB.getUsers());
+                    } finally {
+                        if (isMounted) setLoadingFeed(false);
+                    }
+                })();
+                // Likes reales, compartidos entre todos los usuarios/dispositivos.
+                (async () => {
+                    try {
+                        const snap = await db.collection('postLikes').get();
+                        const map = {};
+                        snap.docs.forEach(d => {
+                            const { postId, userEmail } = d.data();
+                            if (!map[postId]) map[postId] = [];
+                            map[postId].push(userEmail);
+                        });
+                        if (isMounted) setLikesMap(map);
+                    } catch (e) {
+                        console.error('No se pudieron cargar los likes reales', e);
+                    }
+                })();
+                return () => { isMounted = false; };
+            }, []);
+
             const buildPosts = () => {
-                const allUsers = DB.getUsers();
                 let dynamicPosts = [];
-                allUsers.forEach(u => {
+                realUsers.forEach(u => {
                     if (u.activities && u.activities.length > 0) {
                         u.activities.forEach((act, idx) => {
                             dynamicPosts.push({
-                                id: `${u.id}-${idx}`,
+                                id: `${u.email}-${idx}`,
                                 user: u.name || u.email.split('@')[0],
                                 activity: act.distance ? `Recorrió ${act.distance}km` : 'Actividad',
                                 impact: `${act.savings}kg CO2`,
-                                location: 'Santiago, Chile',
+                                savingsRaw: Number(act.savings) || 0,
+                                location: act.source === 'gps' ? 'Ubicación real (GPS)' : 'Santiago, Chile',
                                 time: act.date || 'Recientemente',
                                 comment: act.comment || `¡Evitando emisiones en esta ruta! 🚲💚`,
                                 isBusiness: u.role === 'business',
-                                avatar: u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.name || 'hb'}`
+                                isReal: true,
+                                avatar: u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.name || u.email}`
                             });
                         });
                     }
                 });
 
+                // Mas recientes primero.
                 dynamicPosts.reverse();
+
                 const defaultPosts = t.posts.map(p => ({
                     ...p,
+                    savingsRaw: parseFloat(p.impact) || 0,
+                    isReal: false,
                     avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.user}`
                 }));
 
-                return dynamicPosts.length > 0 ? [...dynamicPosts, ...defaultPosts] : defaultPosts;
+                // Los posts de ejemplo quedan al final, claramente separados
+                // de las publicaciones reales de la comunidad.
+                return { real: dynamicPosts, examples: defaultPosts };
             };
 
-            const [posts, setPosts] = useState(buildPosts().map(p => ({
-                ...p,
-                likes: Math.floor(Math.random() * 50) + 5,
-                liked: false
-            })));
+            const { real: realPosts, examples: examplePosts } = buildPosts();
+            const allPosts = [...realPosts, ...examplePosts];
 
-            const handleLike = (id) => {
-                setPosts(posts.map(p => {
-                    if (p.id === id) {
-                        if (!p.liked) addToast(t.toastLike, 'success');
-                        return { ...p, likes: p.liked ? p.likes - 1 : p.likes + 1, liked: !p.liked };
+            // Estadistica real: suma del CO2 ahorrado por TODA la comunidad
+            // (no un numero fijo de "14.2" hardcodeado).
+            const totalCommunityCO2 = realUsers.reduce((sum, u) =>
+                sum + (u.activities || []).reduce((a, b) => a + Number(b.savings || 0), 0), 0
+            );
+
+            const handleLike = async (post) => {
+                if (!post.isReal) {
+                    addToast('Esta es una publicación de ejemplo, no se puede interactuar.', 'info');
+                    return;
+                }
+                const alreadyLiked = (likesMap[post.id] || []).includes(user.email);
+                // Actualizacion optimista en pantalla + persistencia real en Firestore.
+                setLikesMap(prev => {
+                    const current = prev[post.id] || [];
+                    return {
+                        ...prev,
+                        [post.id]: alreadyLiked ? current.filter(e => e !== user.email) : [...current, user.email]
+                    };
+                });
+                const likeDocId = `${post.id}_${user.email}`;
+                try {
+                    if (alreadyLiked) {
+                        await db.collection('postLikes').doc(likeDocId).delete();
+                    } else {
+                        await db.collection('postLikes').doc(likeDocId).set({ postId: post.id, userEmail: user.email, createdAt: new Date().toISOString() });
+                        addToast(t.toastLike, 'success');
                     }
-                    return p;
-                }));
+                } catch (e) {
+                    console.error('No se pudo guardar el like', e);
+                    addToast('No se pudo guardar tu Beat de apoyo. Intenta de nuevo.', 'error');
+                }
             };
 
             return (
@@ -2068,14 +2137,28 @@
                             <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest mt-1">{t.subtitle}</p>
                         </div>
                         <div className="flex -space-x-3">
-                            <div className="w-10 h-10 rounded-full border-2 border-forest-950 bg-mint-500 flex items-center justify-center text-xs font-black text-forest-950 shadow-lg z-10">42</div>
+                            <div className="w-10 h-10 rounded-full border-2 border-forest-950 bg-mint-500 flex items-center justify-center text-xs font-black text-forest-950 shadow-lg z-10">{realUsers.length}</div>
                             <div className="w-10 h-10 rounded-full border-2 border-forest-950 bg-white/10 flex items-center justify-center text-xs">🚲</div>
                         </div>
                     </div>
 
+                    {loadingFeed && (
+                        <div className="glass-card p-6 flex items-center justify-center space-x-3 border-white/5">
+                            <div className="w-4 h-4 border-2 border-mint-400/30 border-t-mint-400 rounded-full animate-spin"></div>
+                            <span className="text-xs text-gray-400 font-medium">Cargando comunidad en vivo...</span>
+                        </div>
+                    )}
+
+                    {!loadingFeed && realPosts.length > 0 && (
+                        <p className="text-[9px] font-black text-mint-400 uppercase tracking-widest px-2">📍 {realPosts.length} publicación(es) real(es) de la comunidad</p>
+                    )}
+
                     <div className="space-y-4">
-                        {posts.map(post => (
-                            <div key={post.id} className={`glass-card p-5 border-white/5 relative overflow-hidden ${post.isBusiness ? 'border-l-4 border-blue-500 bg-blue-500/5' : ''}`}>
+                        {allPosts.map(post => {
+                            const likeCount = (likesMap[post.id] || []).length;
+                            const liked = (likesMap[post.id] || []).includes(user?.email);
+                            return (
+                            <div key={post.id} className={`glass-card p-5 border-white/5 relative overflow-hidden ${post.isBusiness ? 'border-l-4 border-blue-500 bg-blue-500/5' : ''} ${!post.isReal ? 'opacity-70' : ''}`}>
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="flex items-center space-x-3">
                                         <div className="relative">
@@ -2086,6 +2169,7 @@
                                             <div className="flex items-center space-x-2">
                                                 <h3 className="font-black text-sm text-white">{post.user}</h3>
                                                 {post.isBusiness && <span className="text-[7px] bg-blue-500 text-white px-1 rounded-sm font-black uppercase">{t.bcorp}</span>}
+                                                {!post.isReal && <span className="text-[7px] bg-white/10 text-gray-400 px-1.5 py-0.5 rounded-sm font-black uppercase">Ejemplo</span>}
                                             </div>
                                             <p className="text-[10px] text-gray-500 font-bold">{post.time} · {post.location}</p>
                                         </div>
@@ -2100,27 +2184,29 @@
 
                                 <div className="flex items-center justify-between pt-4 border-t border-white/5 text-[10px] font-black uppercase tracking-widest">
                                     <button 
-                                        onClick={() => handleLike(post.id)}
-                                        className={`flex items-center space-x-2 px-3 py-1.5 rounded-full transition-all ${post.liked ? 'bg-mint-500 text-forest-950 shadow-[0_0_15px_rgba(17,212,66,0.3)]' : 'bg-white/5 text-gray-400'}`}
+                                        onClick={() => handleLike(post)}
+                                        disabled={!post.isReal}
+                                        className={`flex items-center space-x-2 px-3 py-1.5 rounded-full transition-all disabled:cursor-not-allowed ${liked ? 'bg-mint-500 text-forest-950 shadow-[0_0_15px_rgba(17,212,66,0.3)]' : 'bg-white/5 text-gray-400'}`}
                                     >
-                                        <span className="text-xs">{post.liked ? '💚' : '🔥'}</span>
-                                        <span>{post.likes} Beats</span>
+                                        <span className="text-xs">{liked ? '💚' : '🔥'}</span>
+                                        <span>{likeCount} Beats</span>
                                     </button>
                                     <div className="flex items-center space-x-4">
-                                        <button className="text-gray-500 hover:text-white transition-colors">{t.comment}</button>
-                                        <button className="text-gray-500 hover:text-white transition-colors">{t.share}</button>
+                                        <span className="text-gray-600 cursor-not-allowed">{t.comment}</span>
+                                        <span className="text-gray-600 cursor-not-allowed">{t.share}</span>
                                     </div>
                                 </div>
                             </div>
-                        ))}
+                            );
+                        })}
                     </div>
 
                     <div className="mx-2 bg-gradient-to-r from-forest-900 to-forest-950 p-6 rounded-[2rem] border border-white/5 text-center space-y-2 shadow-2xl">
                         <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest">{t.statTitle}</div>
-                        <div className="text-2xl font-black text-white italic">14.2 <span className="text-mint-400 font-bold ml-1">{t.tons}</span></div>
-                        <p className="text-[10px] text-gray-400">{t.statDesc}</p>
+                        <div className="text-2xl font-black text-white italic">{totalCommunityCO2.toFixed(1)} <span className="text-mint-400 font-bold ml-1">KG CO2</span></div>
+                        <p className="text-[10px] text-gray-400">Mitigados en total por {realUsers.length} miembro(s) real(es) de la comunidad HappyBeat.</p>
                         <div className="w-full h-1 bg-white/5 rounded-full mt-4 overflow-hidden">
-                            <div className="w-[72%] h-full bg-mint-500 shadow-[0_0_10px_#11d442]"></div>
+                            <div className="h-full bg-mint-500 shadow-[0_0_10px_#11d442]" style={{ width: `${Math.min(100, totalCommunityCO2)}%` }}></div>
                         </div>
                     </div>
                 </div>
