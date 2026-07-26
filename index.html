@@ -1076,6 +1076,13 @@
         );
 
         // --- SHARE FUNCTIONALITY ---
+        // URL real de la app (antes apuntaba a 'happybeat.cl', un dominio
+        // que no existe / no resuelve). Se usa el dominio real de Netlify.
+        const APP_PUBLIC_URL = 'https://happybeat-cl.netlify.app';
+
+        // Devuelve un resultado explicito para que la UI pueda avisar al
+        // usuario en todos los casos, incluido cuando algo falla de verdad
+        // (antes fallaba en silencio sin ningun aviso visible).
         const shareAchievement = async (user) => {
             const totalCO2 = (user?.activities || []).reduce((a, b) => a + Number(b.savings), 0).toFixed(1);
             const totalKm = (user?.activities || []).reduce((a, b) => a + Number(b.distance), 0).toFixed(1);
@@ -1087,17 +1094,26 @@
                     await navigator.share({
                         title: 'Mi Impacto Eco - Happy Beat CL',
                         text: shareText,
-                        url: 'https://happybeat.cl'
+                        url: APP_PUBLIC_URL
                     });
-                } catch (e) { console.log('Share cancelled'); }
-            } else {
-                // Fallback: copy to clipboard
-                try {
-                    await navigator.clipboard.writeText(shareText);
-                    return true; // signal success for toast
-                } catch (e) { console.error('Copy failed'); }
+                    return 'shared';
+                } catch (e) {
+                    // El usuario cerro el dialogo de compartir: no es un error real.
+                    if (e.name === 'AbortError') return 'cancelled';
+                    console.error('Share failed', e);
+                    // Si el compartir nativo falla por otra razon, intenta el
+                    // respaldo de copiar al portapapeles antes de rendirse.
+                }
             }
-            return false;
+
+            // Fallback: copy to clipboard
+            try {
+                await navigator.clipboard.writeText(shareText);
+                return 'copied';
+            } catch (e) {
+                console.error('Copy failed', e);
+                return 'error';
+            }
         };
 
         // Categorias reales del US AQI (EPA), usadas para interpretar el
@@ -1146,8 +1162,14 @@
             }, []);
 
             const handleShare = async () => {
-                const copied = await shareAchievement(user);
-                if (copied) addToast('¡Copiado al portapapeles! Compártelo 📋', 'success');
+                const result = await shareAchievement(user);
+                if (result === 'copied') {
+                    addToast('¡Copiado al portapapeles! Compártelo 📋', 'success');
+                } else if (result === 'error') {
+                    addToast('No se pudo compartir ni copiar. Intenta de nuevo.', 'error');
+                }
+                // 'shared' (se abrio el menu nativo) y 'cancelled' (el usuario
+                // cerro el dialogo) no requieren aviso adicional.
             };
 
             return (
