@@ -1384,6 +1384,14 @@
             const [mode, setMode] = useState('bike');
             const [distance, setDistance] = useState(5);
             const [isTracking, setIsTracking] = useState(false);
+            const [trackMode, setTrackMode] = useState('manual'); // 'manual' | 'gps'
+            const [gpsStatus, setGpsStatus] = useState('idle'); // idle | acquiring | active | error
+            const [gpsDistance, setGpsDistance] = useState(0); // km reales acumulados por GPS
+            const [elapsedSec, setElapsedSec] = useState(0);
+            const watchIdRef = React.useRef(null);
+            const lastPosRef = React.useRef(null);
+            const startTimeRef = React.useRef(null);
+            const timerRef = React.useRef(null);
 
             const co2Factors = {
                 walk: 0.18, // saved vs car per km
@@ -1392,16 +1400,99 @@
                 car: 0
             };
 
-            const savings = (distance * co2Factors[mode]).toFixed(2);
-            const coins = distance * 10; // 10 Beatcoins por cada KM
+            // En modo GPS usamos la distancia real medida; en manual, el slider.
+            const activeDistance = trackMode === 'gps' ? gpsDistance : distance;
+            const savings = (activeDistance * co2Factors[mode]).toFixed(2);
+            const coins = Math.round(activeDistance * 10); // 10 Beatcoins por cada KM real
+            // Velocidad real: distancia real / tiempo real transcurrido (evita
+            // la formula inventada anterior que solo multiplicaba la distancia).
+            const realSpeedKmh = elapsedSec > 0 ? (gpsDistance / (elapsedSec / 3600)) : 0;
+
+            // Distancia minima entre lecturas de GPS para contarla como
+            // movimiento real (filtra el "ruido" tipico del GPS cuando la
+            // persona esta quieta, que puede saltar algunos metros solo).
+            const MIN_MOVEMENT_KM = 0.008; // 8 metros
+            const MAX_JUMP_KM = 0.5; // descarta saltos irreales (perdida de señal)
+
+            const stopGpsWatch = () => {
+                if (watchIdRef.current !== null) {
+                    navigator.geolocation.clearWatch(watchIdRef.current);
+                    watchIdRef.current = null;
+                }
+                if (timerRef.current) {
+                    clearInterval(timerRef.current);
+                    timerRef.current = null;
+                }
+            };
+
+            useEffect(() => stopGpsWatch, []);
+
+            const startGpsTracking = () => {
+                if (!('geolocation' in navigator)) {
+                    toast('Tu navegador no soporta GPS. Usa el registro manual.', 'error');
+                    return;
+                }
+                setGpsStatus('acquiring');
+                setGpsDistance(0);
+                setElapsedSec(0);
+                lastPosRef.current = null;
+                startTimeRef.current = Date.now();
+
+                watchIdRef.current = navigator.geolocation.watchPosition(
+                    (pos) => {
+                        const { latitude, longitude, accuracy } = pos.coords;
+                        setGpsStatus('active');
+                        // Ignora lecturas con muy baja precision (GPS interior, etc.)
+                        if (accuracy && accuracy > 50) return;
+
+                        if (lastPosRef.current) {
+                            const delta = distanceKm(lastPosRef.current.lat, lastPosRef.current.lon, latitude, longitude);
+                            if (delta >= MIN_MOVEMENT_KM && delta <= MAX_JUMP_KM) {
+                                setGpsDistance(d => d + delta);
+                                lastPosRef.current = { lat: latitude, lon: longitude };
+                            } else if (delta > MAX_JUMP_KM) {
+                                // Salto irreal (perdida de señal): solo actualiza el punto de referencia, no suma distancia
+                                lastPosRef.current = { lat: latitude, lon: longitude };
+                            }
+                        } else {
+                            lastPosRef.current = { lat: latitude, lon: longitude };
+                        }
+                    },
+                    (err) => {
+                        setGpsStatus('error');
+                        toast('No se pudo acceder al GPS. Revisa los permisos de ubicación.', 'error');
+                    },
+                    { enableHighAccuracy: true, maximumAge: 3000, timeout: 15000 }
+                );
+
+                timerRef.current = setInterval(() => {
+                    setElapsedSec(Math.round((Date.now() - startTimeRef.current) / 1000));
+                }, 1000);
+            };
+
+            const formatElapsed = (sec) => {
+                const m = Math.floor(sec / 60).toString().padStart(2, '0');
+                const s = (sec % 60).toString().padStart(2, '0');
+                return `${m}:${s}`;
+            };
 
             const handleComplete = () => {
+                stopGpsWatch();
+                const finalDistance = parseFloat(activeDistance.toFixed(2));
+                if (trackMode === 'gps' && finalDistance < 0.05) {
+                    toast('No se detectó movimiento suficiente. Actividad no guardada.', 'error');
+                    setIsTracking(false);
+                    setGpsStatus('idle');
+                    return;
+                }
                 const activity = {
                     date: new Date().toLocaleDateString(),
                     mode,
-                    distance,
+                    distance: finalDistance,
                     savings: parseFloat(savings),
                     points: coins,
+                    source: trackMode, // 'gps' (real) o 'manual' (declarado)
+                    durationSec: trackMode === 'gps' ? elapsedSec : null,
                     id: Date.now()
                 };
                 const updatedUser = {
@@ -1412,8 +1503,12 @@
                 DB.updateUser(updatedUser);
                 onUpdateUser(updatedUser);
                 if (onConfetti) onConfetti();
-                toast(`¡+${coins} Beatcoins! Ahorraste ${savings} kg de CO2 🌱`, 'coin');
+                const sourceLabel = trackMode === 'gps' ? '📍 GPS real' : '✍️ Manual';
+                toast(`¡+${coins} Beatcoins! Ahorraste ${savings} kg de CO2 🌱 (${sourceLabel})`, 'coin');
                 setIsTracking(false);
+                setGpsStatus('idle');
+                setGpsDistance(0);
+                setElapsedSec(0);
             };
 
             return (
@@ -1442,6 +1537,14 @@
                         ))}
                     </div>
 
+                    {/* Selector de modo de registro: GPS real vs manual */}
+                    {!isTracking && (
+                        <div className="flex bg-white/5 rounded-2xl p-1 gap-1 mx-1">
+                            <button onClick={() => setTrackMode('gps')} className={`flex-1 py-2.5 rounded-xl text-[11px] font-black transition-all ${trackMode === 'gps' ? 'bg-mint-500 text-forest-950' : 'text-gray-400 hover:text-white'}`}>📍 GPS Real</button>
+                            <button onClick={() => setTrackMode('manual')} className={`flex-1 py-2.5 rounded-xl text-[11px] font-black transition-all ${trackMode === 'manual' ? 'bg-mint-500 text-forest-950' : 'text-gray-400 hover:text-white'}`}>✍️ Manual</button>
+                        </div>
+                    )}
+
                     {/* Speedometer UI */}
                     <div className="relative group">
                         <div className="absolute inset-0 bg-mint-500/5 blur-3xl rounded-full scale-75 animate-pulse"></div>
@@ -1454,17 +1557,19 @@
                             <svg className="absolute w-[280px] h-[280px] -rotate-90" viewBox="0 0 100 100">
                                 <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="2.5" 
                                     strokeDasharray="283" 
-                                    strokeDashoffset={283 - (distance / 50) * 283} 
-                                    className="text-mint-500 transition-all duration-700 ease-out shadow-[0_0_10px_#11d442]" 
+                                    strokeDashoffset={283 - (Math.min(activeDistance, 50) / 50) * 283} 
+                                    className={`transition-all duration-700 ease-out shadow-[0_0_10px_#11d442] ${trackMode === 'gps' && gpsStatus === 'active' ? 'text-mint-400 animate-pulse' : 'text-mint-500'}`}
                                     strokeLinecap="round"
                                 />
                             </svg>
 
                             {/* Center Value */}
                             <div className="relative z-10 flex flex-col items-center">
-                                <span className="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">Distancia</span>
+                                <span className="text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] mb-1">
+                                    {trackMode === 'gps' ? (gpsStatus === 'active' ? '📍 Distancia Real' : gpsStatus === 'acquiring' ? 'Buscando señal GPS...' : 'Distancia Real') : 'Distancia'}
+                                </span>
                                 <div className="text-7xl font-black text-white italic tracking-tighter flex items-baseline">
-                                    {distance}
+                                    {activeDistance.toFixed(trackMode === 'gps' ? 2 : 1)}
                                     <span className="text-sm font-bold text-mint-400 ml-1 not-italic">KM</span>
                                 </div>
                                 <div className="mt-4 flex flex-col items-center">
@@ -1477,8 +1582,12 @@
                             {/* Speed/Pace Grid */}
                             <div className="absolute bottom-10 inset-x-8 grid grid-cols-2 gap-4 border-t border-white/5 pt-6">
                                 <div className="text-center">
-                                    <p className="text-[8px] text-gray-500 font-black uppercase tracking-widest">Vel. Promedio</p>
-                                    <p className="text-lg font-black text-white italic">{(distance * 1.5).toFixed(1)} <span className="text-[10px] not-italic text-gray-400">km/h</span></p>
+                                    <p className="text-[8px] text-gray-500 font-black uppercase tracking-widest">{trackMode === 'gps' ? 'Tiempo / Vel. Real' : 'Vel. Estimada'}</p>
+                                    {trackMode === 'gps' ? (
+                                        <p className="text-lg font-black text-white italic">{formatElapsed(elapsedSec)} <span className="text-[10px] not-italic text-gray-400">· {realSpeedKmh.toFixed(1)} km/h</span></p>
+                                    ) : (
+                                        <p className="text-lg font-black text-white italic">{(distance * 1.5).toFixed(1)} <span className="text-[10px] not-italic text-gray-400">km/h</span></p>
+                                    )}
                                 </div>
                                 <div className="text-center">
                                     <p className="text-[8px] text-gray-500 font-black uppercase tracking-widest">Beatcoins</p>
@@ -1491,26 +1600,39 @@
                         </div>
                     </div>
 
-                    {/* Range Slider for Manual Simulation */}
-                    <div className="px-4 space-y-3">
-                        <div className="flex justify-between items-center text-[9px] font-black text-gray-500 uppercase tracking-widest px-1">
-                            <span>Mín: 1km</span>
-                            <span className="text-mint-400">Ajuste manual de sesión</span>
-                            <span>Máx: 50km</span>
+                    {trackMode === 'manual' && !isTracking && (
+                        <div className="px-4 space-y-3">
+                            <div className="flex justify-between items-center text-[9px] font-black text-gray-500 uppercase tracking-widest px-1">
+                                <span>Mín: 1km</span>
+                                <span className="text-mint-400">Ajuste manual de sesión</span>
+                                <span>Máx: 50km</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="1"
+                                max="50"
+                                step="0.5"
+                                value={distance}
+                                onChange={(e) => setDistance(parseFloat(e.target.value))}
+                                className="w-full h-1.5 bg-white/5 rounded-full appearance-none cursor-pointer accent-mint-500"
+                            />
+                            <p className="text-[9px] text-gray-500 text-center px-4">Registro manual: declaras tú mismo la distancia. Para una medición real, usa el modo 📍 GPS Real.</p>
                         </div>
-                        <input
-                            type="range"
-                            min="1"
-                            max="50"
-                            step="0.5"
-                            value={distance}
-                            onChange={(e) => setDistance(parseFloat(e.target.value))}
-                            className="w-full h-1.5 bg-white/5 rounded-full appearance-none cursor-pointer accent-mint-500"
-                        />
-                    </div>
+                    )}
+
+                    {trackMode === 'gps' && (
+                        <div className="px-4">
+                            {gpsStatus === 'error' && (
+                                <p className="text-[10px] text-red-400 text-center">No se pudo acceder al GPS. Revisa los permisos de ubicación del navegador.</p>
+                            )}
+                            {!isTracking && gpsStatus !== 'error' && (
+                                <p className="text-[9px] text-gray-500 text-center">Se medirá tu distancia real usando el GPS del dispositivo mientras te mueves.</p>
+                            )}
+                        </div>
+                    )}
 
                     <div className="px-4 relative">
-                        {isTracking && (
+                        {isTracking && trackMode === 'manual' && (
                             <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-48 text-center animate-in slide-in-from-bottom duration-500">
                                 <div className="bg-mint-500 text-forest-950 text-[10px] font-black py-1 px-3 rounded-full shadow-lg inline-flex items-center space-x-2 border-2 border-forest-950">
                                     <span className="w-2 h-2 bg-forest-950 rounded-full animate-ping"></span>
@@ -1525,8 +1647,9 @@
                                     handleComplete();
                                 } else {
                                     setIsTracking(true);
-                                    // Simulated speech feedback
-                                    if ('speechSynthesis' in window) {
+                                    if (trackMode === 'gps') {
+                                        startGpsTracking();
+                                    } else if ('speechSynthesis' in window) {
                                         const ut = new SpeechSynthesisUtterance("¡Viaje iniciado! Vamos a limpiar la ciudad.");
                                         ut.lang = 'es-CL';
                                         ut.rate = 1.2;
