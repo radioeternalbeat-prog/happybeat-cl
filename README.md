@@ -69,12 +69,28 @@ Para reconectar este repo a Netlify (deploy automático en cada push):
 
 ## 🔐 Notas de seguridad
 
-- La configuración de Firebase incluida en `index.html` (`apiKey`, `projectId`, etc.) corresponde a las credenciales **públicas de cliente Web** de Firebase — esto es normal y no representa una clave secreta filtrada. La seguridad real depende de las **reglas de Firestore/Auth** configuradas en la consola de Firebase del proyecto `app-happybeat`. Se recomienda revisarlas antes de seguir desarrollando.
+- La configuración de Firebase incluida en `index.html` (`apiKey`, `projectId`, etc.) corresponde a las credenciales **públicas de cliente Web** de Firebase — esto es normal y no representa una clave secreta filtrada. La seguridad real depende de las **reglas de Firestore/Auth** configuradas en la consola de Firebase del proyecto `app-happybeat`.
 - Hay una URL de ejemplo para un mapa estático (Geoapify) con el placeholder `YOUR_API_KEY_HERE` — no es una clave real, hay que reemplazarla si se quiere activar esa funcionalidad de mapa.
+
+### Reglas de Firestore (`firestore.rules`)
+
+El proyecto `app-happybeat` es compartido con otras apps/servicios (colecciones `licenses`, `enlista`, `portfolio`), que se dejaron intactas. Se agregó la regla faltante para la colección `users` que usa Happy Beat CL — antes no existía ninguna regla para esa ruta, por lo que Firestore denegaba **todo** acceso por defecto (comportamiento seguro, pero significaba que la sincronización en la nube nunca funcionó; la app solo persistía datos en `localStorage`).
+
+El contenido completo y actualizado de las reglas vive en [`firestore.rules`](./firestore.rules) en este repo, como referencia versionada. **Para que tenga efecto real, debe copiarse manualmente en la consola de Firebase:**
+
+1. Entra a https://console.firebase.google.com/project/app-happybeat/firestore/rules
+2. Reemplaza el contenido del editor por el de [`firestore.rules`](./firestore.rules).
+3. Click en "Publicar" (Publish).
+
+Con esta regla, cada usuario autenticado solo puede leer/escribir su propio documento en `/users/{email}` — nadie puede ver ni modificar el perfil de otro usuario.
+
+⚠️ **Pendiente de revisión (fuera del alcance de Happy Beat CL, pero visible en el mismo proyecto Firebase):** las colecciones `licenses` y `enlista`/`portfolio` permiten lectura y/o escritura pública sin autenticación (`allow read, write: if true`). Como la API key del proyecto es pública (embebida en el HTML de Happy Beat CL), cualquiera con esa key podría leer/escribir esas colecciones también. Si contienen datos sensibles o de otro producto en producción, conviene revisarlas por separado.
 
 ## 🗺️ Próximos pasos sugeridos
 
-- [ ] Revisar y ajustar las reglas de seguridad de Firebase/Firestore.
+- [x] Revisar y ajustar las reglas de seguridad de Firebase/Firestore para `users` (ver `firestore.rules`).
+- [ ] Revisar por separado las reglas de `licenses`, `enlista` y `portfolio` (pertenecen a otros proyectos, no a Happy Beat CL).
+- [ ] Confirmar métodos de inicio de sesión habilitados en Firebase Auth (Email/Password, Google, Apple).
 - [ ] Decidir si se migra a un proyecto con build (Vite/Next.js) para mejor mantenibilidad, o se mantiene como HTML único.
 - [ ] Agregar clave real de Geoapify (o cambiar de proveedor de mapas) para activar el Eco-Mapa en vivo.
 - [ ] Definir mejoras/modificaciones puntuales a implementar.

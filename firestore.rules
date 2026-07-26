@@ -1,0 +1,27 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // --- Happy Beat CL ---
+    // Cada usuario autenticado solo puede leer y escribir su propio
+    // documento de perfil (identificado por su email). Antes de esta regla,
+    // la coleccion /users no tenia ninguna entrada, por lo que Firestore
+    // denegaba TODO acceso por defecto (comportamiento seguro pero roto:
+    // la app nunca lograba sincronizar datos en la nube, solo localStorage).
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.token.email == userId;
+    }
+
+    // --- Reglas preexistentes de otros proyectos (sin modificar) ---
+    match /licenses/{licenseKey} {
+      allow read: if true;
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['devices', 'lastUsedAt']);
+      allow create: if true;
+    }
+    match /enlista/global_state {
+      allow read, write: if true;
+    }
+    match /portfolio/public_data {
+      allow read, write: if true;
+    }
+  }
+}
