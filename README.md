@@ -60,7 +60,7 @@ python3 -m http.server 8080
 
 ## 📻 Radio en vivo
 
-"Happy Harmony Radio" transmite una señal de audio real (`https://topradio.us/proxy/eternalbeat/stream`), reproducida con un elemento `<audio>` nativo (no un iframe). Se puede cambiar la URL de la señal desde el Panel de Administración → "Configuración de Radio" (debe ser una URL directa de stream Shoutcast/Icecast, no un link de YouTube).
+"Happy Harmony Radio" transmite una señal de audio real (`https://topradio.us/proxy/eternalbeat/stream`), reproducida con un elemento `<audio>` nativo (no un iframe). Se puede cambiar la URL de la señal desde el Panel de Administración → "Configuración de Radio" (debe ser una URL directa de stream Shoutcast/Icecast, no un link de YouTube). El logo de la estación (`radio-logo.png`) se muestra en el reproductor, tanto colapsado como expandido.
 
 ## ☁️ Despliegue
 
