@@ -72,11 +72,19 @@ python3 -m http.server 8080
 
 ## 🤖 Eco-IA Asistente
 
-El chat flotante "Eco-IA" (visible en el Dashboard) está conectado a la **API de Google Gemini** (`gemini-flash-latest`, plan gratuito, sin tarjeta de crédito), en lugar de la lógica anterior por palabras clave hardcodeadas. Cada mensaje se envía directo desde el navegador vía `fetch`, igual que Geoapify y Open-Meteo.
+El chat flotante "Eco-IA" (visible en el Dashboard) está conectado a la **API de Google Gemini** (`gemini-flash-latest`, plan gratuito, sin tarjeta de crédito), en lugar de la lógica anterior por palabras clave hardcodeadas.
 
-- La API key (`GEMINI_API_KEY` en `index.html`) es de uso en cliente, igual que `GEOAPIFY_API_KEY`; se recomienda restringirla por dominio referente (`happybeat-cl.netlify.app`) en [Google Cloud Console → Credenciales](https://console.cloud.google.com/apis/credentials).
+A diferencia de Geoapify/Open-Meteo, la key de Gemini es una **"auth key" vinculada a una cuenta de servicio de Google Cloud** (más sensible que una key anónima de solo lectura), y GitHub bloquea automáticamente cualquier push que la contenga en texto plano. Por eso esta integración usa una arquitectura distinta:
+
+- El navegador llama a `/.netlify/functions/eco-ia` (una **Netlify Function**, código en [`netlify/functions/eco-ia.js`](./netlify/functions/eco-ia.js)), nunca directo a Gemini.
+- La función corre en el servidor de Netlify y lee la key desde la variable de entorno privada `GEMINI_API_KEY`, configurada en **Netlify → Site settings → Environment variables** — nunca en este repositorio.
 - Cada consulta incluye contexto real del usuario (CO2 ahorrado, km recorridos, modo de transporte principal, insignias, Beatcoins, estado del plan de mitigación si es cuenta empresa) para que las respuestas sean personalizadas.
-- Si la API falla (sin internet, cuota agotada, etc.), se muestra un aviso claro y el indicador de estado cambia a "Sin conexión", en vez de fallar en silencio.
+- Si la función o la API fallan (sin internet, cuota agotada, key no configurada, etc.), se muestra un aviso claro y el indicador de estado cambia a "Sin conexión", en vez de fallar en silencio.
+
+**Configuración requerida en Netlify (una sola vez):**
+1. Entra a tu sitio en Netlify → **Site configuration → Environment variables**.
+2. Agrega una variable: `GEMINI_API_KEY` = tu clave de [Google AI Studio](https://aistudio.google.com/apikey) (gratis, sin tarjeta de crédito).
+3. Guarda y vuelve a desplegar el sitio (Netlify redeploya automáticamente al detectar el cambio, o puedes forzarlo desde "Deploys → Trigger deploy").
 
 ## 📻 Radio en vivo
 
