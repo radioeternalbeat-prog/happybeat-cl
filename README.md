@@ -70,6 +70,14 @@ python3 -m http.server 8080
 
 > ⚠️ El registro del Service Worker (`/sw.js`) requiere HTTPS o `localhost` para funcionar correctamente.
 
+## 🤖 Eco-IA Asistente
+
+El chat flotante "Eco-IA" (visible en el Dashboard) está conectado a la **API de Google Gemini** (`gemini-flash-latest`, plan gratuito, sin tarjeta de crédito), en lugar de la lógica anterior por palabras clave hardcodeadas. Cada mensaje se envía directo desde el navegador vía `fetch`, igual que Geoapify y Open-Meteo.
+
+- La API key (`GEMINI_API_KEY` en `index.html`) es de uso en cliente, igual que `GEOAPIFY_API_KEY`; se recomienda restringirla por dominio referente (`happybeat-cl.netlify.app`) en [Google Cloud Console → Credenciales](https://console.cloud.google.com/apis/credentials).
+- Cada consulta incluye contexto real del usuario (CO2 ahorrado, km recorridos, modo de transporte principal, insignias, Beatcoins, estado del plan de mitigación si es cuenta empresa) para que las respuestas sean personalizadas.
+- Si la API falla (sin internet, cuota agotada, etc.), se muestra un aviso claro y el indicador de estado cambia a "Sin conexión", en vez de fallar en silencio.
+
 ## 📻 Radio en vivo
 
 "Happy Harmony Radio" transmite una señal de audio real (`https://topradio.us/proxy/eternalbeat/stream`), reproducida con un elemento `<audio>` nativo (no un iframe). Se puede cambiar la URL de la señal desde el Panel de Administración → "Configuración de Radio" (debe ser una URL directa de stream Shoutcast/Icecast, no un link de YouTube). El logo de la estación (`radio-logo.png`) se muestra en el reproductor, tanto colapsado como expandido.
@@ -116,6 +124,7 @@ Con esta regla, cada usuario autenticado solo puede leer/escribir su propio docu
 - [x] Fix "Compartir Impacto": el link compartido apuntaba a un dominio inexistente (`happybeat.cl`) y ahora usa la URL real de producción; se agregó aviso al usuario si falla tanto el compartir nativo como copiar al portapapeles.
 - [x] Feed Social (Comunidad) real: consulta Firestore para mostrar actividades de todos los usuarios reales, likes reales persistentes (colección `postLikes`), y estadística real de CO2 comunitario. **Requiere publicar `firestore.rules` actualizado en la consola de Firebase** (lectura de `/users` para cualquier autenticado).
 - [x] Portal de Empresas rediseñado como proceso real de consultoría (Solicitud → Asignación → Ejecución → Certificación), reemplazando la "certificación ESG automática" simulada y el pago desconectado de la certificación.
+- [x] Eco-IA Asistente conectado a una IA real (Google Gemini) en vez de respuestas simuladas por palabras clave.
 - [ ] Definir mejoras/modificaciones puntuales a implementar.
 - [ ] Revisar las reglas de Firestore para permitir que un admin autenticado apruebe/modifique documentos de otros usuarios (hoy la regla solo permite que cada usuario edite su propio documento; las aprobaciones desde el Panel de Admin —identidad, certificaciones B2B— solo persisten en `localStorage`, no en Firestore).
 - [ ] Sync Hub honesto: el escaneo de wearables por Bluetooth y la integración con apps de salud (Apple Health, Google Fit, Strava, Garmin, Polar, WHOOP) requieren un backend propio para manejar credenciales OAuth de forma segura; están fuera de alcance mientras el proyecto sea un HTML estático sin servidor.

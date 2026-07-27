@@ -907,51 +907,86 @@
             );
         };
 
+        // Eco-IA real, conectada a la API de Google Gemini (plan gratuito,
+        // sin tarjeta de credito). A diferencia de Geoapify/Open-Meteo, la
+        // key de Gemini es una "auth key" vinculada a una cuenta de
+        // servicio de Google Cloud (mas sensible que una key anonima de
+        // solo lectura) y GitHub la bloquea si aparece en el codigo fuente.
+        // Por eso NO se llama a Gemini directo desde el navegador: se llama
+        // a una Netlify Function (netlify/functions/eco-ia.js) que corre en
+        // el servidor y guarda la key de forma privada como variable de
+        // entorno (Netlify > Site settings > Environment variables), nunca
+        // en este repositorio.
+        const ECO_IA_ENDPOINT = '/.netlify/functions/eco-ia';
+
         const AIAssistant = () => {
             const user = React.useContext(UserContext);
             const [isOpen, setIsOpen] = useState(false);
             const [messages, setMessages] = useState([
-                { role: 'assistant', content: `¡Hola ${user?.name || 'Eco-Guerrero'}! Soy tu Eco-IA. Estoy analizando tu impacto actual. ¿Quieres saber cómo mitigar más CO2 hoy?` }
+                { role: 'assistant', content: `¡Hola ${user?.name || 'Eco-Guerrero'}! Soy tu Eco-IA, conectada a Google Gemini. Estoy analizando tu impacto actual. ¿Quieres saber cómo mitigar más CO2 hoy?` }
             ]);
             const [input, setInput] = useState('');
             const [isTyping, setIsTyping] = useState(false);
+            const [aiError, setAiError] = useState(false);
 
-            const handleSend = () => {
-                if (!input.trim()) return;
+            const handleSend = async () => {
+                if (!input.trim() || isTyping) return;
 
                 const userMsg = { role: 'user', content: input };
-                setMessages(prev => [...prev, userMsg]);
+                const nextMessages = [...messages, userMsg];
+                setMessages(nextMessages);
                 setInput('');
                 setIsTyping(true);
+                setAiError(false);
 
-                // Analyze User Data for personalization
+                // Contexto real del usuario, usado para personalizar las
+                // respuestas de la IA (nada de esto es simulado: viene de
+                // sus actividades, insignias y Beatcoins reales).
                 const activities = user?.activities || [];
-                const totalSavings = activities.reduce((acc, curr) => acc + curr.savings, 0);
-                const mainMode = activities.length > 0 ?
-                    activities.reduce((a, b) => (activities.filter(v => v.mode === a).length >= activities.filter(v => v.mode === b).length ? a : b)).mode : 'ninguno';
+                const totalSavings = activities.reduce((acc, curr) => acc + Number(curr.savings || 0), 0);
+                const totalKm = activities.reduce((acc, curr) => acc + Number(curr.distance || 0), 0);
+                const mainMode = activities.length > 0
+                    ? activities.reduce((a, b) => (activities.filter(v => v.mode === a).length >= activities.filter(v => v.mode === b).length ? a : b)).mode
+                    : 'ninguno todavía';
+                const unlockedBadgesCount = BADGES.filter(b => b.check(user)).length;
+                const mitigationStatus = user?.mitigationPlan?.status || null;
 
-                // Mock AI Logic with Personalization
-                setTimeout(() => {
-                    let response = "Es una excelente pregunta. Analizando tu perfil, veo que has ahorrado " + totalSavings.toFixed(1) + "kg de CO2. ";
+                const systemInstruction = `Eres "Eco-IA", el asistente virtual de Happy Beat CL, una app chilena de sustentabilidad creada por la ONG HappyBeatCL. Ayudas a los usuarios a reducir su huella de carbono con consejos prácticos, breves (máximo 4-5 frases) y en español de Chile, con tono cercano y motivador. Puedes usar 1 o 2 emojis relevantes, sin exagerar.
 
-                    const query = input.toLowerCase();
-                    if (query.includes('mi') || query.includes('perfil') || query.includes('datos') || query.includes('historial')) {
-                        response += `Tu modo principal es '${mainMode}'. Te sugiero diversificar tus actividades sostenibles para maximizar tus Beatcoins.`;
-                    } else if (query.includes('transporte') || query.includes('auto') || query.includes('vuelo') || query.includes('viaje')) {
-                        response = "En transporte, la mayor mitigación se logra usando bicicleta o transporte público. Si usas auto, intenta compartir viajes o planificar rutas eficientes para reducir emisiones por kilómetro.";
-                    } else if (query.includes('carne') || query.includes('dieta') || query.includes('comida') || query.includes('alimento')) {
-                        response = "Tu alimentación tiene un gran impacto. Reducir el consumo de carne roja y lácteos, y optar por productos locales y de temporada, puede bajar tu huella alimentaria significativamente.";
-                    } else if (query.includes('luz') || query.includes('energía') || query.includes('electricidad') || query.includes('consumo')) {
-                        response = "Para mitigar emisiones por energía, cambia a bombillas LED, desconecta aparatos en stand-by y considera instalar paneles solares. ¡Cada kWh ahorrado reduce emisiones directas!";
-                    } else if (query.includes('basura') || query.includes('reciclar') || query.includes('plástico') || query.includes('residuo')) {
-                        response = "La clave es 'Reducir'. Antes de reciclar, intenta evitar envases de un solo uso. Compostar tus residuos orgánicos evita la liberación de metano en vertederos.";
-                    } else {
-                        response = "Para mitigar tu huella de carbono de manera efectiva, te recomiendo priorizar la eficiencia en tus traslados y el cambio hacia una dieta más basada en plantas. ¡Sigue así!";
-                    }
+Datos reales del usuario que estás asesorando ahora mismo:
+- Nombre: ${user?.name || 'Eco-Guerrero'}
+- CO2 ahorrado hasta ahora: ${totalSavings.toFixed(1)} kg
+- Distancia recorrida de forma sustentable: ${totalKm.toFixed(1)} km
+- Modo de transporte más usado: ${mainMode}
+- Insignias obtenidas: ${unlockedBadgesCount} de ${BADGES.length}
+- Beatcoins acumulados: ${user?.points || 0}
+${mitigationStatus ? `- Esta persona representa una empresa con un Plan de Mitigación en estado: ${mitigationStatus}.` : ''}
 
-                    setMessages(prev => [...prev, { role: 'assistant', content: response }]);
+Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero no inventes datos que no tengas. Si te preguntan algo fuera del tema de sustentabilidad, medio ambiente o la app, responde amablemente que tu especialidad es la huella de carbono y redirige la conversación hacia eso.`;
+
+                try {
+                    const contents = nextMessages.map(m => ({
+                        role: m.role === 'assistant' ? 'model' : 'user',
+                        parts: [{ text: m.content }]
+                    }));
+
+                    const res = await fetch(ECO_IA_ENDPOINT, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents, systemInstruction })
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok || !data.text) throw new Error(data?.error || ('Eco-IA respondio con estado ' + res.status));
+
+                    setMessages(prev => [...prev, { role: 'assistant', content: data.text }]);
+                } catch (e) {
+                    console.error('Eco-IA (Gemini) fallo', e);
+                    setAiError(true);
+                    setMessages(prev => [...prev, { role: 'assistant', content: 'No pude conectarme con mi motor de IA en este momento 😅. Revisa tu conexión a internet e intenta de nuevo en unos segundos.' }]);
+                } finally {
                     setIsTyping(false);
-                }, 1200);
+                }
             };
 
             return (
@@ -981,8 +1016,8 @@
                                         <div>
                                             <h3 className="font-bold text-sm">Eco-IA Asistente</h3>
                                             <div className="flex items-center space-x-1">
-                                                <span className="w-1.5 h-1.5 bg-mint-500 rounded-full animate-pulse"></span>
-                                                <span className="text-[9px] text-mint-500 uppercase font-black tracking-widest">Precisión Global</span>
+                                                <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${aiError ? 'bg-red-500' : 'bg-mint-500'}`}></span>
+                                                <span className={`text-[9px] uppercase font-black tracking-widest ${aiError ? 'text-red-400' : 'text-mint-500'}`}>{aiError ? 'Sin conexión' : 'Google Gemini'}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -1021,13 +1056,15 @@
                                             type="text"
                                             value={input}
                                             onChange={(e) => setInput(e.target.value)}
-                                            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                                            onKeyPress={(e) => e.key === 'Enter' && !isTyping && handleSend()}
                                             placeholder="Pregunta sobre mitigación de huella..."
-                                            className="flex-1 bg-black/40 border border-white/10 rounded-2xl px-5 py-3.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-mint-500/50 transition-all shadow-inner"
+                                            disabled={isTyping}
+                                            className="flex-1 bg-black/40 border border-white/10 rounded-2xl px-5 py-3.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-mint-500/50 transition-all shadow-inner disabled:opacity-50"
                                         />
                                         <button
                                             onClick={handleSend}
-                                            className="bg-mint-500 text-forest-950 w-12 h-12 rounded-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-[0_5px_15px_rgba(17,212,66,0.2)]"
+                                            disabled={isTyping || !input.trim()}
+                                            className="bg-mint-500 text-forest-950 w-12 h-12 rounded-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-[0_5px_15px_rgba(17,212,66,0.2)] disabled:opacity-40 disabled:hover:scale-100"
                                         >
                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                                         </button>
