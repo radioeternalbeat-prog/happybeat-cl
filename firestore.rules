@@ -29,6 +29,19 @@ service cloud.firestore {
       allow update: if false;
     }
 
+    // Bitacora de auditoria del Panel de Administracion: registra que
+    // administrador hizo que cambio (aprobar identidad, certificar
+    // empresa, marcar canje entregado, ascender a otro admin, etc.) y
+    // cuando. Solo un usuario cuyo propio documento en /users tenga
+    // role == 'admin' puede leer o escribir esta coleccion; nunca se
+    // permite editar ni borrar un registro ya creado (integridad del
+    // historial).
+    match /adminAuditLog/{entryId} {
+      allow read, create: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.token.email)).data.role == 'admin';
+      allow update, delete: if false;
+    }
+
     // --- Reglas preexistentes de otros proyectos (sin modificar) ---
     match /licenses/{licenseKey} {
       allow read: if true;

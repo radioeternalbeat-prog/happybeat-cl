@@ -362,7 +362,29 @@
             updateSettings: (settings) => {
                 const current = DB.getSettings();
                 localStorage.setItem('hb_settings', JSON.stringify({ ...current, ...settings }));
-            }
+            },
+            // --- Bitacora de auditoria del Panel de Administracion ---
+            // Registra QUIEN hizo QUE accion y CUANDO, para dar trazabilidad
+            // real a los cambios y revisiones del/los administrador(es).
+            // Se guarda en Firestore (compartido entre dispositivos/admins)
+            // con un espejo local en localStorage como respaldo offline o
+            // si las reglas de Firestore aun no estan publicadas.
+            logAction: async (actor, action, details = '') => {
+                const entry = {
+                    actorEmail: actor?.email || 'desconocido',
+                    actorName: actor?.name || actor?.email || 'Administrador',
+                    action,
+                    details,
+                    createdAt: new Date().toISOString()
+                };
+                const local = JSON.parse(localStorage.getItem('hb_audit_log') || '[]');
+                local.unshift({ ...entry, id: Date.now() + Math.random() });
+                localStorage.setItem('hb_audit_log', JSON.stringify(local.slice(0, 200)));
+                try {
+                    await db.collection('adminAuditLog').add(entry);
+                } catch (e) { console.error('No se pudo registrar la accion en la bitacora de auditoria', e); }
+            },
+            getAuditLogLocal: () => JSON.parse(localStorage.getItem('hb_audit_log') || '[]')
         };
 
         // Removed hardcoded init
@@ -2830,16 +2852,74 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
             );
         };
 
-        const AdminPanel = () => {
+        const AdminPanel = ({ user, onUpdateUser }) => {
             const [users, setUsers] = useState(DB.getUsers());
+            const [auditLog, setAuditLog] = useState(DB.getAuditLogLocal());
+            const [loadingLog, setLoadingLog] = useState(true);
+            const [editingProfile, setEditingProfile] = useState(false);
+            const [adminName, setAdminName] = useState(user?.name || '');
             const addToast = useToast();
 
-            const handleDelete = (id) => {
+            // Trae la bitacora real desde Firestore (compartida entre todos
+            // los administradores/dispositivos). Si falla, se queda con el
+            // espejo local que ya se cargo al inicio, para no dejar la
+            // seccion vacia.
+            useEffect(() => {
+                let isMounted = true;
+                (async () => {
+                    try {
+                        const snap = await db.collection('adminAuditLog').orderBy('createdAt', 'desc').limit(30).get();
+                        const cloudLog = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                        if (isMounted && cloudLog.length > 0) setAuditLog(cloudLog);
+                    } catch (e) {
+                        console.error('No se pudo cargar la bitacora de auditoria desde Firestore, usando respaldo local', e);
+                    } finally {
+                        if (isMounted) setLoadingLog(false);
+                    }
+                })();
+                return () => { isMounted = false; };
+            }, []);
+
+            const logAndRefresh = async (action, details) => {
+                await DB.logAction(user, action, details);
+                setAuditLog(DB.getAuditLogLocal());
+            };
+
+            const handleDelete = (id, targetEmail, targetName) => {
                 if (confirm('¿Estás seguro de eliminar este usuario?')) {
-                    DB.deleteUser(id);
+                    DB.deleteUser(id, targetEmail);
                     setUsers(DB.getUsers());
+                    logAndRefresh('Eliminó un usuario', targetName || targetEmail || `id ${id}`);
                     addToast('Usuario eliminado', 'error');
                 }
+            };
+
+            const handleSaveAdminProfile = () => {
+                if (!adminName.trim()) { addToast('El nombre no puede estar vacío', 'error'); return; }
+                const updated = { ...user, name: adminName.trim() };
+                DB.updateUser(updated);
+                onUpdateUser(updated);
+                setEditingProfile(false);
+                logAndRefresh('Actualizó su perfil de administrador', adminName.trim());
+                addToast('Perfil de administrador actualizado', 'success');
+            };
+
+            const handlePromoteToAdmin = (u) => {
+                if (u.role === 'admin') return;
+                if (!confirm(`¿Otorgar permisos de Administrador a ${u.name || u.email}? Podrá ver y modificar toda la base de usuarios, canjes, verificaciones y planes de mitigación.`)) return;
+                const updated = { ...u, role: 'admin' };
+                DB.updateUser(updated);
+                setUsers(DB.getUsers());
+                logAndRefresh('Otorgó permisos de Administrador', u.name || u.email);
+                addToast(`${u.name || u.email} ahora es Administrador`, 'success');
+            };
+
+            const ACTION_ICONS = {
+                'Aprobó identidad': '🆔', 'Rechazó identidad': '🆔', 'Marcó canje como entregado': '🎁',
+                'Asignó profesional a plan de mitigación': '🏢', 'Inició ejecución de plan de mitigación': '🏢',
+                'Agregó meta a plan de mitigación': '🏢', 'Certificó empresa': '🏆', 'Revocó certificación': '🏆',
+                'Actualizó URL de radio': '📻', 'Actualizó link de donación': '💚', 'Eliminó un usuario': '🗑️',
+                'Otorgó permisos de Administrador': '🛡️', 'Actualizó su perfil de administrador': '👤'
             };
 
             return (
@@ -2865,6 +2945,87 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                         </button>
                     </div>
 
+                    {/* Mi Perfil de Administrador */}
+                    <div className="glass-card p-6 space-y-4 bg-gradient-to-br from-papaya-500/10 to-forest-900 border-papaya-500/20 relative overflow-hidden">
+                        <div className="absolute -top-8 -right-8 w-32 h-32 bg-papaya-500/10 blur-3xl"></div>
+                        <div className="relative flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                                <div className="w-14 h-14 rounded-full border-2 border-papaya-500/40 overflow-hidden bg-forest-900 shadow-[0_0_20px_rgba(255,128,0,0.2)] flex-shrink-0">
+                                    <img src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || user?.email}`} className="w-full h-full object-cover" alt="avatar admin" />
+                                </div>
+                                <div>
+                                    <span className="text-[9px] bg-papaya-500/20 text-papaya-400 font-black px-2 py-0.5 rounded-full uppercase inline-block mb-1">🛡️ Administrador</span>
+                                    {editingProfile ? (
+                                        <input
+                                            type="text"
+                                            value={adminName}
+                                            onChange={(e) => setAdminName(e.target.value)}
+                                            className="bg-white/5 border border-papaya-500/30 rounded-lg px-3 py-1.5 text-sm font-black w-48"
+                                            autoFocus
+                                        />
+                                    ) : (
+                                        <h2 className="text-lg font-black">{user?.name || 'Administrador'}</h2>
+                                    )}
+                                    <p className="text-xs text-gray-400">{user?.email}</p>
+                                    <p className="text-[10px] text-gray-500 mt-0.5">Miembro desde: {user?.regDate || '—'}</p>
+                                </div>
+                            </div>
+                            {editingProfile ? (
+                                <div className="flex flex-col space-y-1.5">
+                                    <button onClick={handleSaveAdminProfile} className="px-3 py-1.5 bg-mint-500 text-forest-950 rounded-lg text-[10px] font-black uppercase hover:scale-105 transition-all">Guardar</button>
+                                    <button onClick={() => { setEditingProfile(false); setAdminName(user?.name || ''); }} className="px-3 py-1.5 bg-white/10 text-gray-300 rounded-lg text-[10px] font-black uppercase hover:bg-white/20 transition-all">Cancelar</button>
+                                </div>
+                            ) : (
+                                <button onClick={() => setEditingProfile(true)} className="px-3 py-1.5 bg-papaya-500/20 text-papaya-400 rounded-lg text-[10px] font-black uppercase hover:bg-papaya-500/30 transition-all flex-shrink-0">✏️ Editar</button>
+                            )}
+                        </div>
+                        <div className="relative grid grid-cols-3 gap-3 pt-2 border-t border-white/5">
+                            <div className="text-center">
+                                <div className="font-black text-lg text-papaya-400">{users.filter(u => u.role === 'admin').length}</div>
+                                <div className="text-[8px] text-gray-500 uppercase tracking-widest mt-0.5">Admins Activos</div>
+                            </div>
+                            <div className="text-center">
+                                <div className="font-black text-lg text-papaya-400">{users.length}</div>
+                                <div className="text-[8px] text-gray-500 uppercase tracking-widest mt-0.5">Usuarios Totales</div>
+                            </div>
+                            <div className="text-center">
+                                <div className="font-black text-lg text-papaya-400">{auditLog.length}</div>
+                                <div className="text-[8px] text-gray-500 uppercase tracking-widest mt-0.5">Acciones Registradas</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Bitacora de Auditoria: quien hizo que cambio y cuando */}
+                    <div className="glass-card overflow-hidden">
+                        <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
+                            <h3 className="font-bold text-sm tracking-widest uppercase text-papaya-400">Bitácora de Cambios y Revisiones</h3>
+                            <span className="bg-papaya-500/20 text-papaya-400 text-[10px] font-black px-2 py-1 rounded-full">{auditLog.length} REGISTROS</span>
+                        </div>
+                        <div className="divide-y divide-white/5 max-h-[350px] overflow-y-auto">
+                            {auditLog.map((entry) => (
+                                <div key={entry.id} className="p-4 flex items-start space-x-3 hover:bg-white/5 transition-colors">
+                                    <div className="w-9 h-9 rounded-xl bg-papaya-500/10 flex items-center justify-center border border-papaya-500/20 flex-shrink-0">
+                                        <span className="text-base">{ACTION_ICONS[entry.action] || '📝'}</span>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-bold text-white">{entry.action}</p>
+                                        {entry.details && <p className="text-[11px] text-gray-400 truncate">{entry.details}</p>}
+                                        <p className="text-[9px] text-gray-500 mt-0.5">
+                                            <span className="text-papaya-400 font-bold">{entry.actorName || entry.actorEmail}</span>
+                                            {' · '}
+                                            {new Date(entry.createdAt).toLocaleString('es-CL')}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                            {auditLog.length === 0 && (
+                                <div className="p-8 text-center">
+                                    <p className="text-gray-500 text-sm">{loadingLog ? 'Cargando bitácora...' : 'Aún no hay acciones registradas.'}</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
                     <div className="glass-card p-6 space-y-4">
                         <h3 className="font-bold text-sm tracking-widest uppercase text-beatcoin">Configuración de Radio</h3>
                         <div className="space-y-4">
@@ -2883,6 +3044,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                             const url = document.getElementById('streamUrlInput').value;
                                             DB.updateSettings({ streamUrl: url });
                                             window.dispatchEvent(new CustomEvent('settingsUpdated'));
+                                            logAndRefresh('Actualizó URL de radio', url);
                                             addToast('Radio actualizada. Efectivo al instante.', 'success');
                                         }}
                                         className="bg-mint-500 text-forest-950 px-4 rounded-xl text-[10px] font-black hover:scale-105 transition-all"
@@ -2907,6 +3069,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                         onClick={() => {
                                             const url = document.getElementById('donationUrlInput').value;
                                             DB.updateSettings({ donationUrl: url });
+                                            logAndRefresh('Actualizó link de donación', url);
                                             addToast('Enlace de donación guardado.', 'success');
                                         }}
                                         className="bg-papaya-500 text-white px-4 rounded-xl text-[10px] font-black hover:scale-105 transition-all"
@@ -2959,6 +3122,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                                 );
                                                 DB.updateUser({ ...owner, redeemed: updatedRedeemed });
                                                 setUsers(DB.getUsers());
+                                                logAndRefresh('Marcó canje como entregado', `${r.name} · ${r.ownerName || r.ownerEmail}`);
                                                 addToast(`Canje de ${r.ownerName || r.ownerEmail} marcado como entregado`, 'success');
                                             }}
                                             className="px-3 py-1.5 rounded-xl text-xs font-bold bg-mint-500/10 text-mint-500 hover:bg-mint-500/20 transition-colors"
@@ -2998,6 +3162,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                             onClick={() => {
                                                 const updated = { ...u, isVerified: true, identityDocPending: false };
                                                 DB.updateUser(updated); setUsers(DB.getUsers());
+                                                logAndRefresh('Aprobó identidad', u.name || u.email);
                                                 addToast(`Identidad de ${u.name || u.email} aprobada`, 'success');
                                             }}
                                             className="px-3 py-1.5 rounded-xl text-xs font-bold bg-mint-500/10 text-mint-500 hover:bg-mint-500/20 transition-colors"
@@ -3008,6 +3173,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                             onClick={() => {
                                                 const updated = { ...u, identityDocPending: false };
                                                 DB.updateUser(updated); setUsers(DB.getUsers());
+                                                logAndRefresh('Rechazó identidad', u.name || u.email);
                                                 addToast(`Solicitud de ${u.name || u.email} rechazada`, 'error');
                                             }}
                                             className="px-3 py-1.5 rounded-xl text-xs font-bold bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
@@ -3042,13 +3208,26 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                             <p className="text-xs text-gray-500">{u.email}</p>
                                         </div>
                                     </div>
-                                    <div className="text-right flex items-center space-x-4">
+                                    <div className="text-right flex items-center space-x-3">
                                         <div className="hidden sm:block">
                                             <span className="text-[10px] text-gray-500 block uppercase font-bold">Registro</span>
                                             <span className="text-xs font-medium">{u.regDate}</span>
                                         </div>
+                                        {u.role === 'admin' ? (
+                                            <span className="px-2.5 py-1.5 bg-papaya-500/20 text-papaya-400 rounded-xl text-[9px] font-black uppercase flex items-center space-x-1">
+                                                <span>🛡️</span><span>Admin</span>
+                                            </span>
+                                        ) : (
+                                            <button
+                                                onClick={() => handlePromoteToAdmin(u)}
+                                                title="Otorgar permisos de Administrador"
+                                                className="px-2.5 py-1.5 bg-papaya-500/10 hover:bg-papaya-500/20 text-papaya-400 rounded-xl text-[9px] font-black uppercase transition-colors"
+                                            >
+                                                🛡️ Hacer Admin
+                                            </button>
+                                        )}
                                         <button
-                                            onClick={() => handleDelete(u.id)}
+                                            onClick={() => handleDelete(u.id, u.email, u.name)}
                                             className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl transition-colors"
                                         >
                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
@@ -3103,6 +3282,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                                         if (!name || !title) { addToast('Completa nombre y título del profesional', 'error'); return; }
                                                         const updatedUser = { ...u, mitigationPlan: { ...p, status: 'assigned', professional: { name, title }, assignedAt: new Date().toLocaleDateString('es-CL') } };
                                                         DB.updateUser(updatedUser); setUsers(DB.getUsers());
+                                                        logAndRefresh('Asignó profesional a plan de mitigación', `${name} → ${u.companyProfile?.companyName || u.email}`);
                                                         addToast(`Profesional asignado a ${u.companyProfile?.companyName || u.email}`, 'success');
                                                     }}
                                                     className="w-full py-2 bg-papaya-500/20 text-papaya-400 rounded-lg text-[10px] font-black uppercase hover:bg-papaya-500/30 transition-colors"
@@ -3119,6 +3299,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                                     onClick={() => {
                                                         const updatedUser = { ...u, mitigationPlan: { ...p, status: 'in_progress', startedAt: new Date().toLocaleDateString('es-CL') } };
                                                         DB.updateUser(updatedUser); setUsers(DB.getUsers());
+                                                        logAndRefresh('Inició ejecución de plan de mitigación', u.companyProfile?.companyName || u.email);
                                                         addToast('Plan marcado como en ejecución', 'success');
                                                     }}
                                                     className="w-full py-2 bg-purple-500/20 text-purple-400 rounded-lg text-[10px] font-black uppercase hover:bg-purple-500/30 transition-colors"
@@ -3144,6 +3325,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                                         const newGoals = [...(p.goals || []), { title, description, done: false }];
                                                         const updatedUser = { ...u, mitigationPlan: { ...p, goals: newGoals } };
                                                         DB.updateUser(updatedUser); setUsers(DB.getUsers());
+                                                        logAndRefresh('Agregó meta a plan de mitigación', `${title} · ${u.companyProfile?.companyName || u.email}`);
                                                         addToast('Meta agregada al plan', 'success');
                                                     }}
                                                     className="w-full py-2 bg-white/10 text-white rounded-lg text-[10px] font-black uppercase hover:bg-white/20 transition-colors"
@@ -3154,6 +3336,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                                     onClick={() => {
                                                         const updatedUser = { ...u, mitigationPlan: { ...p, status: 'completed', certifiedAt: new Date().toLocaleDateString('es-CL') } };
                                                         DB.updateUser(updatedUser); setUsers(DB.getUsers());
+                                                        logAndRefresh('Certificó empresa', u.companyProfile?.companyName || u.email);
                                                         addToast(`¡${u.companyProfile?.companyName || u.email} certificada!`, 'coin');
                                                     }}
                                                     className="w-full py-2 bg-mint-500/20 text-mint-400 rounded-lg text-[10px] font-black uppercase hover:bg-mint-500/30 transition-colors"
@@ -3170,6 +3353,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                                     onClick={() => {
                                                         const updatedUser = { ...u, mitigationPlan: { ...p, status: 'in_progress', certifiedAt: null } };
                                                         DB.updateUser(updatedUser); setUsers(DB.getUsers());
+                                                        logAndRefresh('Revocó certificación', u.companyProfile?.companyName || u.email);
                                                         addToast('Certificación revocada, plan vuelve a ejecución', 'info');
                                                     }}
                                                     className="mt-2 text-[9px] font-black text-red-400 uppercase hover:text-red-300"
@@ -3964,7 +4148,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                             {activeTab === 'business' && <BusinessPortal user={user} onUpdateUser={setUser} />}
                             {activeTab === 'social' && <SocialFeed user={user} />}
                             {activeTab === 'challenges' && <Community user={user} onUpdateUser={setUser} setActiveTab={setActiveTab} />}
-                            {activeTab === 'admin' && <AdminPanel />}
+                            {activeTab === 'admin' && <AdminPanel user={user} onUpdateUser={setUser} />}
                             {activeTab === 'profile' && <Profile user={user} onUpdateUser={setUser} onLogout={handleLogout} setActiveTab={setActiveTab} />}
 
                             {/* Bottom Navigation */}
