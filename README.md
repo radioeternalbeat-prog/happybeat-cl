@@ -86,6 +86,12 @@ A diferencia de Geoapify/Open-Meteo, la key de Gemini es una **"auth key" vincul
 2. Agrega una variable: `GEMINI_API_KEY` = tu clave de [Google AI Studio](https://aistudio.google.com/apikey) (gratis, sin tarjeta de crédito).
 3. Guarda y vuelve a desplegar el sitio (Netlify redeploya automáticamente al detectar el cambio, o puedes forzarlo desde "Deploys → Trigger deploy").
 
+## 🎨 Paleta de marca (Eternal Beat / McLaren)
+
+Happy Beat CL mantiene su identidad propia (verde menta + dorado), pero suma acentos de **naranja papaya** (`#FF8000`) y **amarillo volt/lima** (`#E1FF00`) — la paleta de la escudería McLaren, alma máter de Eternal Beat Medios CL — como tokens de tema (`--color-papaya-*`, `--color-volt-*`).
+
+Estos acentos reemplazan el antiguo "azul de sistema" genérico de Tailwind en zonas sin color de marca propio: Portal de Empresas/ESG, verificación de identidad, Comunidad, panel de Admin y el reproductor de Happy Harmony Radio. Se preserva intencionalmente el azul en el toast de tipo "info" (convención de UX), la categoría "Punto de Reciclaje" del Eco-Mapa (color semántico) y los puntos de contacto con Mercado Pago/Mercado Libre (color de marca de terceros).
+
 ## 📻 Radio en vivo
 
 "Happy Harmony Radio" transmite una señal de audio real (`https://topradio.us/proxy/eternalbeat/stream`), reproducida con un elemento `<audio>` nativo (no un iframe). Se puede cambiar la URL de la señal desde el Panel de Administración → "Configuración de Radio" (debe ser una URL directa de stream Shoutcast/Icecast, no un link de YouTube). El logo de la estación (`radio-logo.png`) se muestra en el reproductor, tanto colapsado como expandido.
@@ -133,6 +139,7 @@ Con esta regla, cada usuario autenticado solo puede leer/escribir su propio docu
 - [x] Feed Social (Comunidad) real: consulta Firestore para mostrar actividades de todos los usuarios reales, likes reales persistentes (colección `postLikes`), y estadística real de CO2 comunitario. **Requiere publicar `firestore.rules` actualizado en la consola de Firebase** (lectura de `/users` para cualquier autenticado).
 - [x] Portal de Empresas rediseñado como proceso real de consultoría (Solicitud → Asignación → Ejecución → Certificación), reemplazando la "certificación ESG automática" simulada y el pago desconectado de la certificación.
 - [x] Eco-IA Asistente conectado a una IA real (Google Gemini) en vez de respuestas simuladas por palabras clave.
+- [x] Retoque de paleta de colores con acentos McLaren (papaya/volt) para reflejar la identidad del ecosistema Eternal Beat Medios CL.
 - [ ] Definir mejoras/modificaciones puntuales a implementar.
 - [ ] Revisar las reglas de Firestore para permitir que un admin autenticado apruebe/modifique documentos de otros usuarios (hoy la regla solo permite que cada usuario edite su propio documento; las aprobaciones desde el Panel de Admin —identidad, certificaciones B2B— solo persisten en `localStorage`, no en Firestore).
 - [ ] Sync Hub honesto: el escaneo de wearables por Bluetooth y la integración con apps de salud (Apple Health, Google Fit, Strava, Garmin, Polar, WHOOP) requieren un backend propio para manejar credenciales OAuth de forma segura; están fuera de alcance mientras el proyecto sea un HTML estático sin servidor.
