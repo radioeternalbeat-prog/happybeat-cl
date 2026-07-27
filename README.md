@@ -86,6 +86,16 @@ A diferencia de Geoapify/Open-Meteo, la key de Gemini es una **"auth key" vincul
 2. Agrega una variable: `GEMINI_API_KEY` = tu clave de [Google AI Studio](https://aistudio.google.com/apikey) (gratis, sin tarjeta de crédito).
 3. Guarda y vuelve a desplegar el sitio (Netlify redeploya automáticamente al detectar el cambio, o puedes forzarlo desde "Deploys → Trigger deploy").
 
+## 🛡️ Perfil de Administrador y Bitácora de Auditoría
+
+El Panel de Administración (`role: 'admin'`) incluye ahora:
+
+- **Mi Perfil de Administrador**: tarjeta con avatar, nombre editable, email y fecha de alta del admin con sesión activa, más contadores en vivo de admins activos / usuarios totales / acciones registradas.
+- **Bitácora de Cambios y Revisiones**: registro real de auditoría (colección Firestore `adminAuditLog`, con respaldo en `localStorage`) de cada acción sensible — aprobar/rechazar identidad, canjes entregados, radio/donación, plan de mitigación (asignar profesional, ejecutar, certificar, revocar), eliminar usuario, ascender a administrador, editar el propio perfil. Cada registro guarda quién, qué y cuándo.
+- **Ascenso a Administrador**: botón "🛡️ Hacer Admin" junto a cada usuario en la lista, con confirmación explícita antes de otorgar el permiso.
+
+La regla de Firestore para `/adminAuditLog` solo permite lectura/creación a usuarios cuyo propio documento en `/users` tenga `role == 'admin'`, y nunca permite editar ni borrar un registro ya creado (integridad del historial).
+
 ## 🎨 Paleta de marca (Eternal Beat / McLaren)
 
 Happy Beat CL mantiene su identidad propia (verde menta + dorado), pero suma acentos de **naranja papaya** (`#FF8000`) y **amarillo volt/lima** (`#E1FF00`) — la paleta de la escudería McLaren, alma máter de Eternal Beat Medios CL — como tokens de tema (`--color-papaya-*`, `--color-volt-*`).
@@ -140,6 +150,7 @@ Con esta regla, cada usuario autenticado solo puede leer/escribir su propio docu
 - [x] Portal de Empresas rediseñado como proceso real de consultoría (Solicitud → Asignación → Ejecución → Certificación), reemplazando la "certificación ESG automática" simulada y el pago desconectado de la certificación.
 - [x] Eco-IA Asistente conectado a una IA real (Google Gemini) en vez de respuestas simuladas por palabras clave.
 - [x] Retoque de paleta de colores con acentos McLaren (papaya/volt) para reflejar la identidad del ecosistema Eternal Beat Medios CL.
+- [x] Panel Admin: perfil de administrador editable + bitácora real de auditoría (quién hizo qué cambio y cuándo) + ascenso de otros usuarios a Administrador.
 - [ ] Definir mejoras/modificaciones puntuales a implementar.
 - [ ] Revisar las reglas de Firestore para permitir que un admin autenticado apruebe/modifique documentos de otros usuarios (hoy la regla solo permite que cada usuario edite su propio documento; las aprobaciones desde el Panel de Admin —identidad, certificaciones B2B— solo persisten en `localStorage`, no en Firestore).
 - [ ] Sync Hub honesto: el escaneo de wearables por Bluetooth y la integración con apps de salud (Apple Health, Google Fit, Strava, Garmin, Polar, WHOOP) requieren un backend propio para manejar credenciales OAuth de forma segura; están fuera de alcance mientras el proyecto sea un HTML estático sin servidor.
