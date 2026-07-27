@@ -33,7 +33,20 @@
             --color-mint-400: #25f46a;
             --color-mint-500: #11d442;
             --color-beatcoin: #f4d125;
-            
+
+            /* Paleta "papaya" y "volt" tomadas de la escuderia McLaren,
+               alma mater de Eternal Beat Medios CL. Se usan como acento
+               de marca (Empresas/ESG, verificacion, Comunidad, Admin,
+               Radio) sin desplazar el verde menta / dorado que son la
+               identidad propia de Happy Beat CL. */
+            --color-papaya-300: #ffb366;
+            --color-papaya-400: #ff9933;
+            --color-papaya-500: #ff8000;
+            --color-papaya-600: #e67300;
+            --color-papaya-700: #cc6600;
+            --color-volt-400: #e1ff00;
+            --color-volt-500: #c8e600;
+
             --font-jakarta: 'Plus Jakarta Sans', 'Noto Color Emoji', sans-serif;
             
             --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
@@ -43,7 +56,8 @@
             body {
                 @apply font-jakarta bg-forest-950 text-white min-h-screen overflow-x-hidden;
                 background-image: radial-gradient(circle at top right, rgba(17, 212, 66, 0.1), transparent 40%),
-                                  radial-gradient(circle at bottom left, rgba(244, 209, 37, 0.05), transparent 40%);
+                                  radial-gradient(circle at bottom left, rgba(244, 209, 37, 0.05), transparent 40%),
+                                  radial-gradient(circle at 50% 100%, rgba(255, 128, 0, 0.045), transparent 45%);
             }
         }
 
@@ -99,8 +113,8 @@
             animation: shimmer 2s infinite;
         }
         @keyframes glow-pulse {
-            0%, 100% { box-shadow: 0 0 20px rgba(59,130,246,0.3); }
-            50% { box-shadow: 0 0 40px rgba(59,130,246,0.6), 0 0 60px rgba(59,130,246,0.2); }
+            0%, 100% { box-shadow: 0 0 20px rgba(255,128,0,0.3); }
+            50% { box-shadow: 0 0 40px rgba(255,128,0,0.6), 0 0 60px rgba(225,255,0,0.15); }
         }
         .animate-glow-pulse { animation: glow-pulse 3s ease-in-out infinite; }
         @keyframes stamp {
@@ -838,7 +852,7 @@
             };
 
             return (
-                <div className="glass-card bg-forest-950/40 border border-white/5 overflow-hidden transition-all duration-300 hover:border-mint-500/20 shadow-lg">
+                <div className="glass-card bg-forest-950/40 border border-white/5 overflow-hidden transition-all duration-300 hover:border-papaya-500/30 shadow-lg">
                     {/* Elemento de audio real -- transmite la señal en vivo de Happy Harmony Radio */}
                     <audio
                         ref={audioRef}
@@ -854,7 +868,7 @@
                         onClick={() => setIsExpanded(!isExpanded)}
                     >
                         <div className="flex items-center space-x-4">
-                            <div className={`w-10 h-10 rounded-full overflow-hidden shadow-inner border border-mint-500/30 flex-shrink-0 ${playState === 'playing' ? 'animate-spin-slow' : ''}`}>
+                            <div className={`w-10 h-10 rounded-full overflow-hidden shadow-inner border border-papaya-500/40 flex-shrink-0 ${playState === 'playing' ? 'animate-spin-slow' : ''}`}>
                                 <img src="radio-logo.png" className="w-full h-full object-cover" alt="Logo Eternal Beat Radio" />
                             </div>
                             <div>
@@ -867,8 +881,8 @@
                         <div className="flex items-center space-x-3">
                             <div className={`flex space-x-1 items-end h-3 transition-opacity duration-500 ${playState === 'playing' ? 'opacity-100' : 'opacity-40'}`}>
                                 <div className="w-0.5 h-2 bg-mint-500 animate-pulse"></div>
-                                <div className="w-0.5 h-3 bg-mint-500 animate-pulse delay-75"></div>
-                                <div className="w-0.5 h-1.5 bg-mint-500 animate-pulse delay-150"></div>
+                                <div className="w-0.5 h-3 bg-volt-400 animate-pulse delay-75"></div>
+                                <div className="w-0.5 h-1.5 bg-papaya-500 animate-pulse delay-150"></div>
                             </div>
                             <div className="bg-white/5 p-1.5 rounded-lg border border-white/5">
                                 <svg className={`w-4 h-4 text-gray-400 transition-transform duration-500 ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
@@ -877,7 +891,7 @@
                     </div>
                     {isExpanded && (
                         <div className="p-6 border-t border-white/5 animate-in slide-in-from-top duration-500 flex flex-col items-center space-y-4">
-                            <div className={`w-28 h-28 rounded-full overflow-hidden border-2 border-mint-500/30 shadow-[0_0_25px_rgba(17,212,66,0.2)] ${playState === 'playing' ? 'animate-spin-slow' : ''}`}>
+                            <div className={`w-28 h-28 rounded-full overflow-hidden border-2 border-papaya-500/40 shadow-[0_0_25px_rgba(255,128,0,0.2)] ${playState === 'playing' ? 'animate-spin-slow' : ''}`}>
                                 <img src="radio-logo.png" className="w-full h-full object-cover" alt="Logo Eternal Beat Radio" />
                             </div>
                             <button
@@ -1000,7 +1014,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                             <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                             <div className="relative">
                                 <span className="text-2xl drop-shadow-md">🤖</span>
-                                <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-mint-500 animate-pulse"></div>
+                                <div className="absolute -top-1 -right-1 w-3 h-3 bg-papaya-500 rounded-full border-2 border-mint-500 animate-pulse"></div>
                             </div>
                         </button>
                     </div>
@@ -1227,7 +1241,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                 alt="Profile"
                             />
                             {user?.isVerified && (
-                                <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-500 rounded-full border-2 border-forest-950 flex items-center justify-center shadow-lg shadow-blue-500/40 animate-in zoom-in duration-500">
+                                <div className="absolute -top-1 -right-1 w-5 h-5 bg-papaya-500 rounded-full border-2 border-forest-950 flex items-center justify-center shadow-lg shadow-papaya-500/40 animate-in zoom-in duration-500">
                                     <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
                                 </div>
                             )}
@@ -1313,7 +1327,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                             value={(user?.activities || []).reduce((a, b) => a + Number(b.distance), 0).toFixed(1)}
                             unit="km"
                             colorClass="border-white/5"
-                            icon={<span className="text-blue-400">📍</span>}
+                            icon={<span className="text-papaya-400">📍</span>}
                         />
                     </div>
 
@@ -1402,15 +1416,15 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
 
                         <button
                             onClick={() => setActiveTab('company')}
-                            className="w-full glass-card p-6 bg-gradient-to-r from-blue-600/10 to-transparent border-l-4 border-blue-500 hover:bg-white/10 transition-all text-left flex items-center justify-between group relative overflow-hidden"
+                            className="w-full glass-card p-6 bg-gradient-to-r from-papaya-600/10 to-transparent border-l-4 border-papaya-500 hover:bg-white/10 transition-all text-left flex items-center justify-between group relative overflow-hidden"
                         >
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 blur-2xl -z-0"></div>
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-papaya-500/5 blur-2xl -z-0"></div>
                             <div className="flex items-center space-x-4 relative z-10">
-                                <div className="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center text-2xl group-hover:rotate-12 transition-transform">
+                                <div className="w-12 h-12 bg-papaya-500/20 rounded-2xl flex items-center justify-center text-2xl group-hover:rotate-12 transition-transform">
                                     {user?.companyProfile?.certified ? '✅' : '🏢'}
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-black uppercase tracking-widest text-blue-400">Perfil Empresa B2B</h3>
+                                    <h3 className="text-sm font-black uppercase tracking-widest text-papaya-400">Perfil Empresa B2B</h3>
                                     <p className="text-[10px] text-gray-400 mt-1 font-medium uppercase tracking-tighter">
                                         {user?.companyProfile?.companyName ? user.companyProfile.companyName : 'Configura tu perfil corporativo'}
                                     </p>
@@ -1418,9 +1432,9 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                             </div>
                             <div className="flex items-center space-x-2 relative z-10">
                                 {user?.companyProfile?.certified && (
-                                    <span className="bg-blue-500/20 text-blue-400 text-[8px] font-black px-2 py-0.5 rounded-full border border-blue-500/30 uppercase">ESG</span>
+                                    <span className="bg-papaya-500/20 text-papaya-400 text-[8px] font-black px-2 py-0.5 rounded-full border border-papaya-500/30 uppercase">ESG</span>
                                 )}
-                                <svg className="w-5 h-5 text-blue-500 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                                <svg className="w-5 h-5 text-papaya-500 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
                             </div>
                         </button>
                     </div>
@@ -1938,12 +1952,12 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                     {activeSection === 'identity' && (
                         <div className="space-y-4 animate-in fade-in duration-300">
                             {user?.isVerified && (
-                                <div className="bg-blue-500/10 border border-blue-500/30 rounded-3xl p-4 flex items-center space-x-3">
-                                    <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center">
-                                        <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
+                                <div className="bg-papaya-500/10 border border-papaya-500/30 rounded-3xl p-4 flex items-center space-x-3">
+                                    <div className="w-10 h-10 bg-papaya-500/20 rounded-full flex items-center justify-center">
+                                        <svg className="w-5 h-5 text-papaya-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
                                     </div>
                                     <div>
-                                        <p className="font-black text-blue-400 text-sm">Identidad Verificada ✓</p>
+                                        <p className="font-black text-papaya-400 text-sm">Identidad Verificada ✓</p>
                                         <p className="text-[10px] text-gray-400">Tu cuenta tiene el Blue-Check activo</p>
                                     </div>
                                 </div>
@@ -1974,7 +1988,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                             </div>
                             <div className="glass-card p-4 flex items-center justify-between border-white/5">
                                 <div className="flex items-center space-x-4">
-                                    <div className="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center text-xl">🆔</div>
+                                    <div className="w-10 h-10 bg-papaya-500/20 rounded-xl flex items-center justify-center text-xl">🆔</div>
                                     <div>
                                         <p className="font-black text-sm">Verificación de Identidad</p>
                                         <p className="text-[10px] text-gray-500">
@@ -1994,7 +2008,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                         DB.updateUser(updated); onUpdateUser(updated);
                                         toast('Documento recibido. Un administrador revisará tu solicitud manualmente.', 'info');
                                     }} />
-                                    <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${user?.isVerified ? 'bg-mint-500/20 text-mint-400 cursor-default' : user?.identityDocPending ? 'bg-beatcoin/20 text-beatcoin cursor-default' : 'bg-blue-600 text-white hover:scale-105 shadow-lg shadow-blue-500/30'}`}>
+                                    <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${user?.isVerified ? 'bg-mint-500/20 text-mint-400 cursor-default' : user?.identityDocPending ? 'bg-beatcoin/20 text-beatcoin cursor-default' : 'bg-papaya-600 text-white hover:scale-105 shadow-lg shadow-papaya-500/30'}`}>
                                         {user?.isVerified ? '✓ Completado' : user?.identityDocPending ? '⏳ En revisión' : 'Subir Documento'}
                                     </div>
                                 </label>
@@ -2195,17 +2209,17 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                             const likeCount = (likesMap[post.id] || []).length;
                             const liked = (likesMap[post.id] || []).includes(user?.email);
                             return (
-                            <div key={post.id} className={`glass-card p-5 border-white/5 relative overflow-hidden ${post.isBusiness ? 'border-l-4 border-blue-500 bg-blue-500/5' : ''} ${!post.isReal ? 'opacity-70' : ''}`}>
+                            <div key={post.id} className={`glass-card p-5 border-white/5 relative overflow-hidden ${post.isBusiness ? 'border-l-4 border-papaya-500 bg-papaya-500/5' : ''} ${!post.isReal ? 'opacity-70' : ''}`}>
                                 <div className="flex justify-between items-start mb-4">
                                     <div className="flex items-center space-x-3">
                                         <div className="relative">
                                             <img src={post.avatar} className="w-10 h-10 rounded-full border-2 border-white/10 shadow-lg" alt="avatar" />
-                                            {post.isBusiness && <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-blue-500 rounded-full border-2 border-forest-950 flex items-center justify-center text-[8px]">✨</div>}
+                                            {post.isBusiness && <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-papaya-500 rounded-full border-2 border-forest-950 flex items-center justify-center text-[8px]">✨</div>}
                                         </div>
                                         <div>
                                             <div className="flex items-center space-x-2">
                                                 <h3 className="font-black text-sm text-white">{post.user}</h3>
-                                                {post.isBusiness && <span className="text-[7px] bg-blue-500 text-white px-1 rounded-sm font-black uppercase">{t.bcorp}</span>}
+                                                {post.isBusiness && <span className="text-[7px] bg-papaya-500 text-white px-1 rounded-sm font-black uppercase">{t.bcorp}</span>}
                                                 {!post.isReal && <span className="text-[7px] bg-white/10 text-gray-400 px-1.5 py-0.5 rounded-sm font-black uppercase">Ejemplo</span>}
                                             </div>
                                             <p className="text-[10px] text-gray-500 font-bold">{post.time} · {post.location}</p>
@@ -2675,12 +2689,12 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                 <div className="w-20 h-20 rounded-full border-2 border-mint-500/40 overflow-hidden bg-forest-900 shadow-[0_0_20px_rgba(17,212,66,0.2)]">
                                     <img src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'Felix'}`} className="w-full h-full object-cover" alt="avatar" />
                                 </div>
-                                {user?.isVerified && <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 rounded-full border-2 border-forest-900 flex items-center justify-center"><svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg></div>}
+                                {user?.isVerified && <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-papaya-500 rounded-full border-2 border-forest-900 flex items-center justify-center"><svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg></div>}
                             </div>
                             <div className="flex-1">
                                 <h2 className="text-xl font-black">{user?.name || 'Usuario'}</h2>
                                 <p className="text-xs text-gray-400">{user?.email}</p>
-                                {user?.isVerified && <span className="text-[9px] bg-blue-500/20 text-blue-400 font-black px-2 py-0.5 rounded-full uppercase mt-1 inline-block">Verificado</span>}
+                                {user?.isVerified && <span className="text-[9px] bg-papaya-500/20 text-papaya-400 font-black px-2 py-0.5 rounded-full uppercase mt-1 inline-block">Verificado</span>}
                             </div>
                         </div>
                         <div className="grid grid-cols-3 gap-3 mt-6">
@@ -2741,12 +2755,12 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                     {/* Social Feed Access */}
                     <button
                         onClick={() => setActiveTab('social')}
-                        className="w-full glass-card p-5 bg-gradient-to-r from-blue-600/10 to-indigo-500/10 border-blue-500/20 hover:bg-blue-500/10 transition-all flex items-center justify-between group"
+                        className="w-full glass-card p-5 bg-gradient-to-r from-papaya-600/10 to-volt-500/10 border-papaya-500/20 hover:bg-papaya-500/10 transition-all flex items-center justify-between group"
                     >
                         <div className="flex items-center space-x-4">
-                            <div className="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">👥</div>
+                            <div className="w-12 h-12 bg-papaya-500/20 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">👥</div>
                             <div className="text-left">
-                                <h4 className="text-sm font-black text-blue-300 uppercase tracking-widest">Comunidad HappyBeat</h4>
+                                <h4 className="text-sm font-black text-papaya-300 uppercase tracking-widest">Comunidad HappyBeat</h4>
                                 <p className="text-[10px] text-gray-400 mt-0.5">Mira quién está limpiando Santiago hoy</p>
                             </div>
                         </div>
@@ -2754,7 +2768,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                             <div className="flex -space-x-2">
                                 {[1,2,3].map(i => <img key={i} src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i*77}`} className="w-5 h-5 rounded-full border border-forest-950" />)}
                             </div>
-                            <svg className="w-5 h-5 text-blue-400 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                            <svg className="w-5 h-5 text-papaya-400 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
                         </div>
                     </button>
 
@@ -2845,7 +2859,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                 setUsers(DB.getUsers());
                                 addToast('Datos de prueba generados correctamente.', 'success');
                             }}
-                            className="mt-4 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl text-xs font-bold text-white shadow-lg hover:scale-105 transition-all"
+                            className="mt-4 px-4 py-2 bg-gradient-to-r from-papaya-500 to-volt-500 rounded-xl text-xs font-bold text-white shadow-lg hover:scale-105 transition-all"
                         >
                             🧑‍🔬 Generar Datos de Prueba (Mock)
                         </button>
@@ -2895,7 +2909,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                             DB.updateSettings({ donationUrl: url });
                                             addToast('Enlace de donación guardado.', 'success');
                                         }}
-                                        className="bg-blue-500 text-white px-4 rounded-xl text-[10px] font-black hover:scale-105 transition-all"
+                                        className="bg-papaya-500 text-white px-4 rounded-xl text-[10px] font-black hover:scale-105 transition-all"
                                     >
                                         GUARDAR
                                     </button>
@@ -2964,14 +2978,14 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
 
                     <div className="glass-card overflow-hidden">
                         <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/5">
-                            <h3 className="font-bold text-sm tracking-widest uppercase text-blue-400">Verificaciones de Identidad Pendientes</h3>
-                            <span className="bg-blue-500/20 text-blue-400 text-[10px] font-black px-2 py-1 rounded-full">{users.filter(u => u.identityDocPending && !u.isVerified).length} PENDIENTES</span>
+                            <h3 className="font-bold text-sm tracking-widest uppercase text-papaya-400">Verificaciones de Identidad Pendientes</h3>
+                            <span className="bg-papaya-500/20 text-papaya-400 text-[10px] font-black px-2 py-1 rounded-full">{users.filter(u => u.identityDocPending && !u.isVerified).length} PENDIENTES</span>
                         </div>
                         <div className="divide-y divide-white/5 max-h-[300px] overflow-y-auto">
                             {users.filter(u => u.identityDocPending && !u.isVerified).map(u => (
                                 <div key={'id-' + u.id} className="p-6 flex items-center justify-between hover:bg-white/5 transition-colors">
                                     <div className="flex items-center space-x-4">
-                                        <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
+                                        <div className="w-10 h-10 rounded-full bg-papaya-500/20 flex items-center justify-center border border-papaya-500/30">
                                             <span className="text-xl">🆔</span>
                                         </div>
                                         <div>
@@ -3059,7 +3073,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                             {users.filter(u => u.mitigationPlan).map(u => {
                                 const p = u.mitigationPlan;
                                 const statusLabel = { requested: 'Solicitud', assigned: 'Asignado', in_progress: 'En Ejecución', completed: 'Certificado' }[p.status] || p.status;
-                                const statusColor = { requested: 'bg-yellow-500/20 text-yellow-400', assigned: 'bg-blue-500/20 text-blue-400', in_progress: 'bg-purple-500/20 text-purple-400', completed: 'bg-mint-500/20 text-mint-400' }[p.status] || 'bg-white/10 text-gray-400';
+                                const statusColor = { requested: 'bg-yellow-500/20 text-yellow-400', assigned: 'bg-papaya-500/20 text-papaya-400', in_progress: 'bg-purple-500/20 text-purple-400', completed: 'bg-mint-500/20 text-mint-400' }[p.status] || 'bg-white/10 text-gray-400';
 
                                 return (
                                     <div key={'b2b-' + u.id} className="p-6 space-y-3 hover:bg-white/5 transition-colors">
@@ -3091,7 +3105,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                                         DB.updateUser(updatedUser); setUsers(DB.getUsers());
                                                         addToast(`Profesional asignado a ${u.companyProfile?.companyName || u.email}`, 'success');
                                                     }}
-                                                    className="w-full py-2 bg-blue-500/20 text-blue-400 rounded-lg text-[10px] font-black uppercase hover:bg-blue-500/30 transition-colors"
+                                                    className="w-full py-2 bg-papaya-500/20 text-papaya-400 rounded-lg text-[10px] font-black uppercase hover:bg-papaya-500/30 transition-colors"
                                                 >
                                                     Asignar Profesional
                                                 </button>
@@ -3270,7 +3284,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                         </div>
                         <div className="flex items-center space-x-2">
                             {isCertified && (
-                                <span className="bg-blue-500/10 text-blue-400 text-[8px] font-black px-2 py-1 rounded-full border border-blue-500/20 uppercase tracking-tight flex items-center space-x-1 animate-glow-pulse">
+                                <span className="bg-papaya-500/10 text-papaya-400 text-[8px] font-black px-2 py-1 rounded-full border border-papaya-500/20 uppercase tracking-tight flex items-center space-x-1 animate-glow-pulse">
                                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
                                     <span>ESG Verificado</span>
                                 </span>
@@ -3286,14 +3300,14 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
 
                     {/* Company Card Hero */}
                     <div className="glass-card overflow-hidden relative">
-                        <div className="h-24 bg-gradient-to-r from-blue-600/30 via-blue-500/20 to-cyan-500/30 relative">
+                        <div className="h-24 bg-gradient-to-r from-papaya-600/30 via-papaya-500/20 to-volt-500/30 relative">
                             <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PHBhdGggZD0iTTM2IDM0djItSDJ2LTJoMzR6bTAtMzBWMkgyVjBoMzR6TTE4IDIydi0ySDJ2Mmge')]"></div>
                             {isCertified && (
                                 <div className="absolute top-3 right-3 animate-stamp">
-                                    <div className="w-16 h-16 border-[3px] border-blue-400 rounded-full flex flex-col items-center justify-center bg-blue-500/20 backdrop-blur-sm">
-                                        <span className="text-[7px] font-black text-blue-300 uppercase tracking-tight">Verificado</span>
+                                    <div className="w-16 h-16 border-[3px] border-papaya-400 rounded-full flex flex-col items-center justify-center bg-papaya-500/20 backdrop-blur-sm">
+                                        <span className="text-[7px] font-black text-papaya-300 uppercase tracking-tight">Verificado</span>
                                         <span className="text-[10px] font-black text-white">ESG</span>
-                                        <span className="text-[7px] font-black text-blue-300">2026</span>
+                                        <span className="text-[7px] font-black text-papaya-300">2026</span>
                                     </div>
                                 </div>
                             )}
@@ -3328,9 +3342,9 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                     {/* KPIs - Only show if has business data */}
                     {(Number(totalCO2) > 0) && (
                         <div className="grid grid-cols-3 gap-3">
-                            <div className="glass-card p-4 text-center border-l-2 border-blue-500">
+                            <div className="glass-card p-4 text-center border-l-2 border-papaya-500">
                                 <div className="text-lg font-black text-white">{Number(totalCO2).toFixed(0)}</div>
-                                <div className="text-[8px] text-blue-400 font-black uppercase tracking-widest mt-0.5">kg CO2</div>
+                                <div className="text-[8px] text-papaya-400 font-black uppercase tracking-widest mt-0.5">kg CO2</div>
                                 <div className="text-[7px] text-gray-500 uppercase">Mitigado</div>
                             </div>
                             <div className="glass-card p-4 text-center border-l-2 border-mint-500">
@@ -3348,8 +3362,8 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
 
                     {/* Edit Form */}
                     {isEditing && (
-                        <div className="glass-card p-6 space-y-5 animate-in slide-in-from-bottom duration-300 border-blue-500/20">
-                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-blue-400 border-b border-white/5 pb-3 flex items-center space-x-2">
+                        <div className="glass-card p-6 space-y-5 animate-in slide-in-from-bottom duration-300 border-papaya-500/20">
+                            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-papaya-400 border-b border-white/5 pb-3 flex items-center space-x-2">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
                                 <span>Datos de la Empresa</span>
                             </h3>
@@ -3361,7 +3375,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                         type="text"
                                         value={profile.companyName}
                                         onChange={(e) => handleChange('companyName', e.target.value)}
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-blue-500 outline-none transition-all text-sm font-bold"
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-papaya-500 outline-none transition-all text-sm font-bold"
                                         placeholder="Ej: Productoras Asociadas SpA"
                                     />
                                 </div>
@@ -3373,7 +3387,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                             type="text"
                                             value={profile.rut}
                                             onChange={(e) => handleChange('rut', e.target.value)}
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-blue-500 outline-none transition-all text-sm font-bold"
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-papaya-500 outline-none transition-all text-sm font-bold"
                                             placeholder="76.123.456-7"
                                         />
                                     </div>
@@ -3383,7 +3397,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                             type="text"
                                             value={profile.city}
                                             onChange={(e) => handleChange('city', e.target.value)}
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-blue-500 outline-none transition-all text-sm font-bold"
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-papaya-500 outline-none transition-all text-sm font-bold"
                                             placeholder="Santiago"
                                         />
                                     </div>
@@ -3398,7 +3412,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                                 onClick={() => handleChange('industry', ind.id)}
                                                 className={`p-3 rounded-xl border text-left flex items-center space-x-2 transition-all text-xs font-bold ${
                                                     profile.industry === ind.id
-                                                        ? 'bg-blue-500/20 border-blue-500/50 text-blue-300'
+                                                        ? 'bg-papaya-500/20 border-papaya-500/50 text-papaya-300'
                                                         : 'bg-white/3 border-white/10 text-gray-400 hover:bg-white/5'
                                                 }`}
                                             >
@@ -3418,7 +3432,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                                 onClick={() => handleChange('size', s.id)}
                                                 className={`p-3 rounded-xl border text-left transition-all ${
                                                     profile.size === s.id
-                                                        ? 'bg-blue-500/20 border-blue-500/50'
+                                                        ? 'bg-papaya-500/20 border-papaya-500/50'
                                                         : 'bg-white/3 border-white/10 hover:bg-white/5'
                                                 }`}
                                             >
@@ -3435,7 +3449,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                         type="url"
                                         value={profile.website}
                                         onChange={(e) => handleChange('website', e.target.value)}
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-blue-500 outline-none transition-all text-sm font-bold"
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-papaya-500 outline-none transition-all text-sm font-bold"
                                         placeholder="https://tuempresa.cl"
                                     />
                                 </div>
@@ -3446,7 +3460,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                         value={profile.mission}
                                         onChange={(e) => handleChange('mission', e.target.value)}
                                         rows="3"
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-blue-500 outline-none transition-all text-sm font-bold resize-none"
+                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-papaya-500 outline-none transition-all text-sm font-bold resize-none"
                                         placeholder="Describe el compromiso ambiental de tu empresa..."
                                     />
                                 </div>
@@ -3455,7 +3469,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                             <button
                                 onClick={handleSave}
                                 disabled={!profile.companyName}
-                                className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] bg-blue-500 text-white shadow-[0_0_30px_rgba(59,130,246,0.3)] hover:bg-blue-400 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                                className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] bg-papaya-500 text-white shadow-[0_0_30px_rgba(255,128,0,0.3)] hover:bg-papaya-400 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                             >
                                 💾 Guardar Perfil de Empresa
                             </button>
@@ -3493,13 +3507,13 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                     )}
 
                     {/* Mitigation Plan Status */}
-                    <div className={`glass-card p-5 border-l-4 ${isCertified ? 'border-mint-500 bg-mint-500/5' : 'border-blue-500 bg-blue-500/5'}`}>
+                    <div className={`glass-card p-5 border-l-4 ${isCertified ? 'border-mint-500 bg-mint-500/5' : 'border-papaya-500 bg-papaya-500/5'}`}>
                         <div className="flex items-start space-x-4">
-                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl ${isCertified ? 'bg-mint-500/20' : 'bg-blue-500/20'}`}>
+                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl ${isCertified ? 'bg-mint-500/20' : 'bg-papaya-500/20'}`}>
                                 {isCertified ? '🏆' : planStatus === 'none' ? '📊' : '🤝'}
                             </div>
                             <div className="flex-1">
-                                <h4 className={`text-sm font-black uppercase tracking-widest ${isCertified ? 'text-mint-400' : 'text-blue-400'}`}>
+                                <h4 className={`text-sm font-black uppercase tracking-widest ${isCertified ? 'text-mint-400' : 'text-papaya-400'}`}>
                                     {{
                                         none: 'Sin Plan de Mitigación',
                                         requested: 'Solicitud Enviada',
@@ -3534,8 +3548,8 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                             }
                         }}
                         className={`w-full py-5 rounded-3xl font-black text-xs uppercase tracking-[0.2em] transition-all text-center flex items-center justify-center space-x-3 ${isCertified 
-                            ? 'bg-gradient-to-r from-blue-700 to-blue-500 text-white shadow-[0_10px_40px_rgba(37,99,235,0.3)] hover:scale-[1.02] active:scale-95 border border-blue-400/30'
-                            : 'bg-gradient-to-r from-mint-500 to-cyan-500 text-forest-950 shadow-[0_10px_40px_rgba(17,212,66,0.3)] hover:scale-[1.02] active:scale-95'
+                            ? 'bg-gradient-to-r from-papaya-700 to-papaya-500 text-white shadow-[0_10px_40px_rgba(230,115,0,0.3)] hover:scale-[1.02] active:scale-95 border border-papaya-400/30'
+                            : 'bg-gradient-to-r from-mint-500 to-volt-500 text-forest-950 shadow-[0_10px_40px_rgba(17,212,66,0.3)] hover:scale-[1.02] active:scale-95'
                         }`}
                     >
                         <span className="text-xl">{isCertified ? '📋' : '🚀'}</span>
@@ -3544,10 +3558,10 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
 
                     {/* Compliance Footer */}
                     <div className="glass-card p-4 bg-white/2 border-white/5 flex items-start space-x-3">
-                        <div className="w-8 h-8 bg-blue-500/10 rounded-xl flex items-center justify-center text-sm flex-shrink-0">🛡️</div>
+                        <div className="w-8 h-8 bg-papaya-500/10 rounded-xl flex items-center justify-center text-sm flex-shrink-0">🛡️</div>
                         <div>
                             <p className="text-[9px] text-gray-400 leading-relaxed">
-                                <span className="text-blue-400 font-bold">HappyBeatCL ONG</span> acompaña a tu empresa con profesionales titulados del área ambiental, usando el marco de referencia <span className="text-white font-bold">GHG Protocol</span> (WRI/WBCSD) para el cálculo referencial de emisiones. La certificación final es emitida por HappyBeatCL ONG en base al proceso ejecutado en conjunto.
+                                <span className="text-papaya-400 font-bold">HappyBeatCL ONG</span> acompaña a tu empresa con profesionales titulados del área ambiental, usando el marco de referencia <span className="text-white font-bold">GHG Protocol</span> (WRI/WBCSD) para el cálculo referencial de emisiones. La certificación final es emitida por HappyBeatCL ONG en base al proceso ejecutado en conjunto.
                             </p>
                         </div>
                     </div>
@@ -3612,7 +3626,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                             <h1 className="text-2xl font-black text-white tracking-tight">Plan de Mitigación</h1>
                             <p className="text-gray-400 text-xs font-medium">Acompañamiento profesional de {ONG_LEGAL_NAME}</p>
                         </div>
-                        <span className="bg-blue-500/10 text-blue-400 text-[10px] font-black px-2 py-0.5 rounded border border-blue-500/20 uppercase tracking-tighter">B2B / ESG</span>
+                        <span className="bg-papaya-500/10 text-papaya-400 text-[10px] font-black px-2 py-0.5 rounded border border-papaya-500/20 uppercase tracking-tighter">B2B / ESG</span>
                     </div>
 
                     {/* Progreso de las 4 etapas */}
@@ -3671,7 +3685,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                             </div>
                             <button
                                 onClick={handleRequestPlan}
-                                className="w-full py-5 rounded-3xl font-black text-xs uppercase tracking-[0.2em] bg-gradient-to-r from-mint-500 to-cyan-500 text-forest-950 shadow-[0_10px_40px_rgba(17,212,66,0.3)] hover:scale-[1.02] active:scale-95 transition-all"
+                                className="w-full py-5 rounded-3xl font-black text-xs uppercase tracking-[0.2em] bg-gradient-to-r from-mint-500 to-volt-500 text-forest-950 shadow-[0_10px_40px_rgba(17,212,66,0.3)] hover:scale-[1.02] active:scale-95 transition-all"
                             >
                                 🚀 Solicitar Plan de Mitigación
                             </button>
@@ -3681,7 +3695,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                     {/* Etapa 1: Solicitud enviada, esperando asignacion */}
                     {status === 'requested' && (
                         <div className="glass-card p-6 space-y-5 text-center">
-                            <div className="w-16 h-16 mx-auto bg-blue-500/10 rounded-full flex items-center justify-center border-2 border-blue-500/30">
+                            <div className="w-16 h-16 mx-auto bg-papaya-500/10 rounded-full flex items-center justify-center border-2 border-papaya-500/30">
                                 <span className="text-3xl">📩</span>
                             </div>
                             <div>
@@ -3705,9 +3719,9 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                     {status === 'assigned' && plan.professional && (
                         <div className="glass-card p-6 space-y-5">
                             <div className="flex items-center space-x-4">
-                                <div className="w-14 h-14 bg-blue-500/20 rounded-2xl flex items-center justify-center text-2xl border border-blue-500/30">👤</div>
+                                <div className="w-14 h-14 bg-papaya-500/20 rounded-2xl flex items-center justify-center text-2xl border border-papaya-500/30">👤</div>
                                 <div>
-                                    <p className="text-[9px] text-blue-400 font-black uppercase tracking-widest">Profesional Asignado</p>
+                                    <p className="text-[9px] text-papaya-400 font-black uppercase tracking-widest">Profesional Asignado</p>
                                     <h3 className="text-sm font-black text-white">{plan.professional.name}</h3>
                                     <p className="text-[10px] text-gray-400">{plan.professional.title}</p>
                                 </div>
@@ -3729,9 +3743,9 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                         <>
                             <div className="glass-card p-6 space-y-4">
                                 <div className="flex items-center space-x-4 pb-4 border-b border-white/5">
-                                    <div className="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center text-xl border border-blue-500/30">👤</div>
+                                    <div className="w-12 h-12 bg-papaya-500/20 rounded-2xl flex items-center justify-center text-xl border border-papaya-500/30">👤</div>
                                     <div>
-                                        <p className="text-[9px] text-blue-400 font-black uppercase tracking-widest">Representante Asignado</p>
+                                        <p className="text-[9px] text-papaya-400 font-black uppercase tracking-widest">Representante Asignado</p>
                                         <h3 className="text-sm font-black text-white">{plan.professional?.name}</h3>
                                         <p className="text-[10px] text-gray-400">{plan.professional?.title}</p>
                                     </div>
@@ -3762,13 +3776,13 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                 <div className="space-y-5">
                                     <div>
                                         <label className="text-[10px] font-bold block mb-2 px-1">
-                                            <span className="text-blue-400 mr-2 uppercase">[Alcance 2]</span> Energía Eléctrica (kWh)
+                                            <span className="text-papaya-400 mr-2 uppercase">[Alcance 2]</span> Energía Eléctrica (kWh)
                                         </label>
                                         <input
                                             type="number"
                                             value={data.energy}
                                             onChange={(e) => handleDataChange('energy', Number(e.target.value))}
-                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-blue-500 outline-none transition-all text-sm font-bold"
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-papaya-500 outline-none transition-all text-sm font-bold"
                                             placeholder="Ej: 1200"
                                         />
                                     </div>
@@ -3803,8 +3817,8 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                 </div>
                             </div>
 
-                            <div className="glass-card p-6 bg-blue-500/5 border-blue-500/20 space-y-3">
-                                <p className="text-[10px] text-blue-400 font-black uppercase tracking-widest">¿Listo para certificar?</p>
+                            <div className="glass-card p-6 bg-papaya-500/5 border-papaya-500/20 space-y-3">
+                                <p className="text-[10px] text-papaya-400 font-black uppercase tracking-widest">¿Listo para certificar?</p>
                                 <p className="text-[10px] text-gray-400 leading-relaxed">Cuando tu profesional confirme que se cumplieron las metas del plan, coordina el cierre y la certificación final directamente con {ONG_LEGAL_NAME}.</p>
                                 <a
                                     href={`https://wa.me/${ONG_WHATSAPP}?text=${encodeURIComponent('Hola! Quisiera coordinar el cierre y certificación de mi Plan de Mitigación.')}`}
@@ -3846,14 +3860,14 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                     )}
 
                     {/* Compliance Section */}
-                    <div className="glass-card p-6 bg-blue-500/5 border-blue-500/20 flex space-x-4 items-center">
-                        <div className="w-12 h-12 bg-blue-500/20 rounded-2xl flex items-center justify-center text-blue-400">
+                    <div className="glass-card p-6 bg-papaya-500/5 border-papaya-500/20 flex space-x-4 items-center">
+                        <div className="w-12 h-12 bg-papaya-500/20 rounded-2xl flex items-center justify-center text-papaya-400">
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
                         </div>
                         <div className="space-y-1">
                             <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Certificación Real, no Automática</h4>
                             <p className="text-[10px] text-gray-400 leading-relaxed">
-                                La certificación es otorgada por <span className="text-blue-400 font-bold">{ONG_LEGAL_NAME}</span>, amparada en su personalidad jurídica, tras un proceso ejecutado junto a un profesional titulado del área ambiental. No existe validación automática ni algorítmica: cada caso es revisado por personas reales.
+                                La certificación es otorgada por <span className="text-papaya-400 font-bold">{ONG_LEGAL_NAME}</span>, amparada en su personalidad jurídica, tras un proceso ejecutado junto a un profesional titulado del área ambiental. No existe validación automática ni algorítmica: cada caso es revisado por personas reales.
                             </p>
                         </div>
                     </div>
@@ -3967,7 +3981,7 @@ Usa estos datos reales para personalizar tu respuesta cuando sea relevante, pero
                                 <NavButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} label="Perfil" icon={
                                     <div className="relative">
                                         <img src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'Felix'}`} className={`w-6 h-6 rounded-full object-cover border-2 transition-colors ${activeTab === 'profile' ? 'border-mint-400' : 'border-white/20'}`} alt="avatar" />
-                                        {user?.isVerified && <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-blue-500 rounded-full border border-forest-950"></div>}
+                                        {user?.isVerified && <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-papaya-500 rounded-full border border-forest-950"></div>}
                                     </div>
                                 } />
                                 {user.role === 'admin' && (
