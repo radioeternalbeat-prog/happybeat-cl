@@ -1,10 +1,12 @@
 // Bump este numero de version en CADA despliegue que cambie index.html.
 // Sirve como "cache-busting": un CACHE_NAME distinto obliga al Service
 // Worker a considerar la instalacion como una actualizacion real.
-const CACHE_NAME = 'happybeat-v2';
+const CACHE_NAME = 'happybeat-v3';
 const urlsToCache = [
   '/',
   '/index.html',
+  '/app',
+  '/app.html',
   '/manifest.json'
 ];
 
