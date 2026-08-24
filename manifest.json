@@ -1,7 +1,8 @@
 {
   "name": "Happy Beat CL",
   "short_name": "HappyBeat",
-  "start_url": "/",
+  "start_url": "/app",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#05140b",
   "theme_color": "#11d442",
