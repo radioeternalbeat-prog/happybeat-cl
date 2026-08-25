@@ -172,6 +172,30 @@
     .contact-item .cl::before { content: ""; position: absolute; left: 0; top: 3px; width: 6px; height: 6px; border-radius: 50%; background: var(--mint-500); }
     .contact-item .cv { color: var(--ink); word-break: break-all; }
 
+    /* Cómo ser socio / aportar */
+    .join-grid { display: flex; gap: 12px; }
+    .join-card {
+        flex: 1; background: #f0fdf4; border: 1px solid rgba(17,212,66,0.25);
+        border-radius: 10px; padding: 13px 15px;
+    }
+    .join-card.gold { background: #fffdf2; border-color: rgba(244,209,37,0.45); }
+    .join-card .jt { font-weight: 800; color: var(--forest-900); font-size: 10.5pt; margin-bottom: 5px; }
+    .join-card .jd { font-size: 9pt; color: var(--muted); }
+
+    /* Datos legales */
+    table.legal { width: 100%; border-collapse: collapse; }
+    table.legal td { padding: 8px 12px; border-bottom: 1px solid #e2ece6; font-size: 9.5pt; vertical-align: top; }
+    table.legal td.k { font-weight: 800; color: var(--mint-700); width: 38%; text-transform: uppercase; font-size: 8.5pt; letter-spacing: 0.5px; }
+    table.legal td.v { color: var(--ink); }
+    .fill { color: #9aa8a0; font-style: italic; }
+
+    /* Firma */
+    .sign-row { display: flex; gap: 40px; margin-top: 42px; }
+    .sign-box { flex: 1; text-align: center; }
+    .sign-box .line { border-top: 1.4px solid var(--forest-900); margin-bottom: 6px; }
+    .sign-box .role { font-weight: 800; color: var(--forest-900); font-size: 9.5pt; }
+    .sign-box .sub { font-size: 8pt; color: var(--muted); }
+
     /* Footer */
     .doc-footer {
         margin-top: 26px; padding-top: 14px; border-top: 1px solid #d9e0dc;
@@ -278,6 +302,57 @@
             <div class="contact-item"><span class="cl">Facebook</span><span class="cv">Happy Beat CL</span></div>
             <div class="contact-item"><span class="cl">Spotify</span><span class="cv">Happy Beat CL</span></div>
         </div>
+    </section>
+
+    <section>
+        <h2><span class="num">8.</span>Cómo Ser Socio o Aportar</h2>
+        <p>Invitamos a artistas, empresas, venues y personas comprometidas con la sostenibilidad a sumarse a la Revolución Sonora Sostenible. Existen distintas formas de colaborar:</p>
+        <div class="join-grid">
+            <div class="join-card">
+                <div class="jt">Socio Colaborador</div>
+                <div class="jd">Aporte periódico (mensual o anual) que sostiene los programas de educación, medición y difusión de la ONG.</div>
+            </div>
+            <div class="join-card gold">
+                <div class="jt">Aliado Estratégico</div>
+                <div class="jd">Empresas, sellos y venues que integran el Plan de Mitigación y buscan certificar la neutralidad de carbono de sus eventos y lanzamientos.</div>
+            </div>
+            <div class="join-card">
+                <div class="jt">Voluntariado y Alianzas</div>
+                <div class="jd">Profesionales del área ambiental y musical que aportan tiempo, conocimiento o redes al comité asesor y a los proyectos piloto.</div>
+            </div>
+        </div>
+        <p style="margin-top:12px;">Para conocer los planes de aporte y formalizar tu participación, contáctanos por WhatsApp <strong>wa.me/56939010237</strong> o a través de nuestros canales oficiales.</p>
+    </section>
+
+    <section>
+        <h2><span class="num">9.</span>Datos Legales de la Organización</h2>
+        <table class="legal">
+            <tr><td class="k">Nombre / Razón social</td><td class="v">Happy Beat CL</td></tr>
+            <tr><td class="k">Tipo de organización</td><td class="v">Organización sin fines de lucro (ONG)</td></tr>
+            <tr><td class="k">RUT</td><td class="v"><span class="fill">_______________________ (por completar)</span></td></tr>
+            <tr><td class="k">Personalidad jurídica</td><td class="v"><span class="fill">_______________________ (N.º y fecha, por completar)</span></td></tr>
+            <tr><td class="k">Representante legal</td><td class="v"><span class="fill">_______________________ (por completar)</span></td></tr>
+            <tr><td class="k">Domicilio</td><td class="v"><span class="fill">_______________________ (por completar)</span></td></tr>
+            <tr><td class="k">Correo de contacto</td><td class="v">beathappycl@gmail.com</td></tr>
+        </table>
+    </section>
+
+    <section>
+        <h2><span class="num">10.</span>Aprobación y Firmas</h2>
+        <p>El presente documento establece las bases fundacionales de la ONG Happy Beat CL y es aprobado por:</p>
+        <div class="sign-row">
+            <div class="sign-box">
+                <div class="line"></div>
+                <div class="role">Representante Legal</div>
+                <div class="sub">Nombre · RUT · Firma</div>
+            </div>
+            <div class="sign-box">
+                <div class="line"></div>
+                <div class="role">Director(a) / Fundador(a)</div>
+                <div class="sub">Nombre · RUT · Firma</div>
+            </div>
+        </div>
+        <p style="margin-top:36px; font-size:9pt; color:var(--muted);">Lugar y fecha: <span class="fill">_______________________________________</span></p>
     </section>
 
     <div class="doc-footer">
