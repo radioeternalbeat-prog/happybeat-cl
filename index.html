@@ -140,6 +140,7 @@
                 <a href="#objetivos" class="hover:text-mint-400 transition">Objetivos</a>
                 <a href="#publico" class="hover:text-mint-400 transition">Público</a>
                 <a href="#acciones" class="hover:text-mint-400 transition">Áreas de Acción</a>
+                <a href="#radio" class="hover:text-mint-400 transition">Radio</a>
                 <a href="#impacto" class="hover:text-mint-400 transition">Impacto</a>
             </nav>
             <a href="/app" class="btn-primary text-sm !py-2.5 !px-5">Unirme al Movimiento</a>
@@ -322,6 +323,136 @@
             </div>
         </div>
     </section>
+
+    <!-- ============ RADIO EN VIVO ============ -->
+    <section id="radio" class="py-24 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-14">
+                <div class="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full glass-morphism text-papaya-400 text-xs font-bold uppercase tracking-widest mb-6">
+                    <span class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-papaya-500 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-papaya-500"></span>
+                    </span>
+                    <span>Señal en Vivo</span>
+                </div>
+                <h2 class="text-3xl sm:text-4xl font-black tracking-tight text-white mb-4">Happy Harmony Radio 📻</h2>
+                <p class="text-gray-400 font-medium">Música consciente que sincroniza el ritmo con el latido del planeta. Escúchala aquí mismo, sin registrarte.</p>
+            </div>
+
+            <!-- Reproductor -->
+            <div class="max-w-xl mx-auto">
+                <div id="radio-player" class="glass-card bg-forest-950/40 border border-white/5 overflow-hidden transition-all duration-300 hover:border-papaya-500/30 shadow-lg p-8 flex flex-col items-center text-center space-y-6"
+                     data-state="idle">
+                    <!-- Elemento de audio real: transmite la señal en vivo de Happy Harmony Radio -->
+                    <audio id="radio-audio" src="https://topradio.us/proxy/eternalbeat/stream" preload="none"></audio>
+
+                    <!-- Logo (gira mientras suena) -->
+                    <div id="radio-logo-wrap" class="w-32 h-32 rounded-full overflow-hidden border-2 border-papaya-500/40 shadow-[0_0_25px_rgba(255,128,0,0.25)]">
+                        <img src="/radio-logo.png" class="w-full h-full object-cover" alt="Logo Happy Harmony Radio" />
+                    </div>
+
+                    <!-- Título + estado -->
+                    <div>
+                        <h3 class="text-lg font-black uppercase text-mint-400 tracking-widest leading-none mb-2">Happy Harmony Radio</h3>
+                        <p id="radio-status" class="text-xs text-gray-400 font-medium">Mitigación Sostenible en Vivo</p>
+                    </div>
+
+                    <!-- Ecualizador animado -->
+                    <div id="radio-eq" class="flex space-x-1.5 items-end h-6 opacity-40 transition-opacity duration-500">
+                        <div class="w-1 h-3 bg-mint-500 rounded-full"></div>
+                        <div class="w-1 h-6 bg-volt-400 rounded-full"></div>
+                        <div class="w-1 h-4 bg-papaya-500 rounded-full"></div>
+                        <div class="w-1 h-5 bg-mint-400 rounded-full"></div>
+                        <div class="w-1 h-2.5 bg-volt-400 rounded-full"></div>
+                    </div>
+
+                    <!-- Botón Play/Pause -->
+                    <button id="radio-btn" aria-label="Reproducir radio en vivo"
+                        class="w-20 h-20 rounded-full flex items-center justify-center bg-mint-500 shadow-[0_0_30px_rgba(17,212,66,0.35)] transition-all active:scale-95 hover:bg-mint-400">
+                        <!-- icono play (por defecto) -->
+                        <svg id="radio-icon-play" class="w-8 h-8 text-forest-950" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                        <!-- icono pause -->
+                        <svg id="radio-icon-pause" class="w-8 h-8 text-forest-950 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 5h4v14H6zm8 0h4v14h-4z" /></svg>
+                        <!-- spinner loading -->
+                        <div id="radio-icon-loading" class="w-7 h-7 border-2 border-forest-950/30 border-t-forest-950 rounded-full animate-spin hidden"></div>
+                    </button>
+
+                    <p id="radio-hint" class="text-[11px] text-gray-500">Toca play para escuchar la señal en vivo</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Animaciones y lógica del reproductor de radio -->
+    <style>
+        @keyframes spin-slow { to { transform: rotate(360deg); } }
+        .animate-spin-slow { animation: spin-slow 8s linear infinite; }
+        @keyframes eq-bar { 0%,100% { transform: scaleY(0.35); } 50% { transform: scaleY(1); } }
+        #radio-player[data-state="playing"] #radio-eq > div { transform-origin: bottom; animation: eq-bar 0.9s ease-in-out infinite; }
+        #radio-player[data-state="playing"] #radio-eq > div:nth-child(2) { animation-delay: .15s; }
+        #radio-player[data-state="playing"] #radio-eq > div:nth-child(3) { animation-delay: .30s; }
+        #radio-player[data-state="playing"] #radio-eq > div:nth-child(4) { animation-delay: .45s; }
+        #radio-player[data-state="playing"] #radio-eq > div:nth-child(5) { animation-delay: .60s; }
+    </style>
+    <script>
+        (function () {
+            var player = document.getElementById('radio-player');
+            var audio = document.getElementById('radio-audio');
+            var btn = document.getElementById('radio-btn');
+            var statusEl = document.getElementById('radio-status');
+            var hintEl = document.getElementById('radio-hint');
+            var logoWrap = document.getElementById('radio-logo-wrap');
+            var eq = document.getElementById('radio-eq');
+            var iPlay = document.getElementById('radio-icon-play');
+            var iPause = document.getElementById('radio-icon-pause');
+            var iLoad = document.getElementById('radio-icon-loading');
+            if (!player || !audio || !btn) return;
+
+            function setState(state) {
+                player.setAttribute('data-state', state);
+                // iconos
+                iPlay.classList.toggle('hidden', state !== 'idle' && state !== 'paused' && state !== 'error');
+                iPause.classList.toggle('hidden', state !== 'playing');
+                iLoad.classList.toggle('hidden', state !== 'loading');
+                // logo girando + ecualizador
+                logoWrap.classList.toggle('animate-spin-slow', state === 'playing');
+                eq.classList.toggle('opacity-100', state === 'playing');
+                eq.classList.toggle('opacity-40', state !== 'playing');
+                // botón: rojo si error
+                btn.classList.toggle('bg-mint-500', state !== 'error');
+                btn.classList.toggle('hover:bg-mint-400', state !== 'error');
+                btn.classList.toggle('bg-red-500/20', state === 'error');
+                // textos
+                var texts = {
+                    idle:    ['Mitigación Sostenible en Vivo', 'Toca play para escuchar la señal en vivo'],
+                    loading: ['Conectando...', 'Buscando la señal en vivo...'],
+                    playing: ['🔴 En Vivo', '🔴 Transmitiendo en vivo ahora'],
+                    paused:  ['En pausa', 'Toca play para retomar la señal'],
+                    error:   ['Señal no disponible', 'No se pudo conectar con la señal en vivo. Intenta más tarde.']
+                };
+                statusEl.textContent = texts[state][0];
+                hintEl.textContent = texts[state][1];
+            }
+
+            audio.addEventListener('playing', function () { setState('playing'); });
+            audio.addEventListener('waiting', function () { setState('loading'); });
+            audio.addEventListener('pause',   function () { if (player.getAttribute('data-state') !== 'error') setState('paused'); });
+            audio.addEventListener('error',   function () { setState('error'); });
+
+            btn.addEventListener('click', function () {
+                var state = player.getAttribute('data-state');
+                if (state === 'playing') {
+                    audio.pause();
+                    setState('paused');
+                } else {
+                    setState('loading');
+                    audio.load();
+                    var p = audio.play();
+                    if (p && p.catch) p.catch(function () { setState('error'); });
+                }
+            });
+        })();
+    </script>
 
     <!-- ============ IMPACTO & HOJA DE RUTA ============ -->
     <section id="impacto" class="py-24 border-t border-white/5">
