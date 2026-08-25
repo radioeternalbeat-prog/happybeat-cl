@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Happy Beat CL — Bases de la ONG</title>
+<style>
+    @page {
+        size: A4;
+        margin: 20mm 18mm 18mm 18mm;
+        @bottom-center { content: counter(page); }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: 'Noto Sans', 'Segoe UI', Arial, sans-serif;
+        color: #1e2a24;
+        font-size: 10.8pt;
+        line-height: 1.5;
+    }
+    /* --- Portada / encabezado --- */
+    .cover {
+        text-align: center;
+        padding: 8px 0 22px;
+        border-bottom: 3px solid #11d442;
+        margin-bottom: 26px;
+        position: relative;
+    }
+    .cover .logo {
+        width: 120px; height: 120px;
+        object-fit: contain;
+        border-radius: 50%;
+        margin: 0 auto 14px;
+        display: block;
+        box-shadow: 0 4px 18px rgba(244,209,37,0.35);
+    }
+    .cover h1 {
+        font-size: 30pt;
+        font-weight: 800;
+        color: #0a2616;
+        letter-spacing: -0.5px;
+    }
+    .cover .brand-cl { color: #11d442; }
+    .cover .subtitle {
+        font-size: 13pt;
+        color: #16a34a;
+        font-weight: 600;
+        margin-top: 6px;
+    }
+    .cover .tagline {
+        display: inline-block;
+        margin-top: 12px;
+        font-size: 8.5pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: #b8860b;
+        background: rgba(244,209,37,0.12);
+        border: 1px solid rgba(244,209,37,0.4);
+        border-radius: 999px;
+        padding: 5px 16px;
+    }
+    /* --- Secciones --- */
+    section { margin-bottom: 20px; page-break-inside: avoid; }
+    h2 {
+        font-size: 14pt;
+        font-weight: 800;
+        color: #0a2616;
+        padding: 7px 0 7px 14px;
+        border-left: 5px solid #11d442;
+        background: linear-gradient(90deg, rgba(17,212,66,0.08), transparent 70%);
+        margin-bottom: 12px;
+        border-radius: 0 6px 6px 0;
+    }
+    h2 .num {
+        display: inline-block;
+        color: #11d442;
+        font-weight: 800;
+        margin-right: 8px;
+    }
+    h3 {
+        font-size: 11pt;
+        font-weight: 700;
+        color: #15803d;
+        margin: 14px 0 8px;
+    }
+    p { margin-bottom: 8px; }
+    ul, ol { margin: 4px 0 8px 4px; padding-left: 20px; }
+    li { margin-bottom: 6px; }
+    li strong, p strong { color: #0a2616; font-weight: 700; }
+    /* Vision/Mision destacadas */
+    .highlight-card {
+        background: #f0fdf4;
+        border: 1px solid rgba(17,212,66,0.25);
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-bottom: 10px;
+    }
+    .highlight-card .label {
+        font-weight: 800; color: #11d442;
+        text-transform: uppercase; letter-spacing: 1px;
+        font-size: 9pt; display: block; margin-bottom: 4px;
+    }
+    /* KPIs */
+    .kpi-row {
+        display: flex; gap: 12px; margin: 10px 0 16px;
+    }
+    .kpi {
+        flex: 1; text-align: center;
+        background: #05140b;
+        color: #fff;
+        border-radius: 12px;
+        padding: 16px 8px;
+        border: 1px solid rgba(244,209,37,0.3);
+    }
+    .kpi .big { font-size: 22pt; font-weight: 800; color: #25f46a; line-height: 1; }
+    .kpi .big.gold { color: #f4d125; }
+    .kpi .desc { font-size: 8pt; color: #cbd5cf; margin-top: 6px; }
+    /* Footer del documento */
+    .doc-footer {
+        margin-top: 28px;
+        padding-top: 14px;
+        border-top: 1px solid #d1d5db;
+        text-align: center;
+        font-size: 8.5pt;
+        color: #6b7280;
+        font-style: italic;
+    }
+    .doc-footer .links { margin-top: 6px; font-style: normal; color: #16a34a; font-weight: 600; }
+</style>
+</head>
+<body>
+
+    <div class="cover">
+        <img class="logo" src="../logo.png" alt="Happy Beat CL">
+        <h1>Happy Beat <span class="brand-cl">CL</span></h1>
+        <div class="subtitle">Bases para una ONG de Huella de Carbono en la Música</div>
+        <div class="tagline">Rhythm for a Greener Tomorrow · Ruta Cero</div>
+    </div>
+
+    <section>
+        <h2><span class="num">1.</span>Visión y Misión</h2>
+        <div class="highlight-card">
+            <span class="label">Visión</span>
+            Ser la organización líder en la promoción y facilitación de prácticas sostenibles en la industria musical, logrando una reducción significativa de su huella de carbono y fomentando una cultura de responsabilidad ambiental a nivel global.
+        </div>
+        <div class="highlight-card">
+            <span class="label">Misión</span>
+            Impulsar la transición de la industria musical hacia operaciones de bajo carbono a través de la educación, la colaboración, la investigación y el desarrollo de herramientas y estándares que permitan a artistas, sellos, promotores y venues medir, reducir y compensar su impacto ambiental.
+        </div>
+    </section>
+
+    <section>
+        <h2><span class="num">2.</span>Objetivos Estratégicos</h2>
+        <ul>
+            <li><strong>Educar y Concienciar:</strong> Aumentar el conocimiento sobre la huella de carbono en la música y las soluciones disponibles entre todos los actores de la industria.</li>
+            <li><strong>Facilitar la Medición:</strong> Desarrollar o adaptar herramientas accesibles para que artistas, eventos y empresas musicales puedan calcular su impacto ambiental.</li>
+            <li><strong>Promover la Reducción:</strong> Identificar y difundir mejores prácticas para disminuir las emisiones en giras, producción de eventos, merchandising y consumo energético.</li>
+            <li><strong>Fomentar la Colaboración:</strong> Crear redes y alianzas entre profesionales de la música, expertos en sostenibilidad y organizaciones.</li>
+            <li><strong>Influir en Políticas:</strong> Abogar por la implementación de políticas y regulaciones que incentiven la sostenibilidad en el sector musical.</li>
+            <li><strong>Innovar y Desarrollar:</strong> Investigar nuevas tecnologías y soluciones para la reducción de emisiones y la economía circular.</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2><span class="num">3.</span>Público Objetivo</h2>
+        <ul>
+            <li><strong>Artistas y Bandas:</strong> Desde emergentes hasta consolidados.</li>
+            <li><strong>Sellos Discográficos:</strong> Independientes y majors.</li>
+            <li><strong>Promotores de Eventos y Festivales:</strong> Organizadores de conciertos y grandes eventos.</li>
+            <li><strong>Venues y Espacios de Música:</strong> Clubes, teatros, estadios y salas de ensayo.</li>
+            <li><strong>Proveedores de Servicios y Audiencia:</strong> Empresas de sonido, iluminación, transporte, catering, merchandising y fans.</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2><span class="num">4.</span>Áreas de Acción Clave</h2>
+        <ul>
+            <li><strong>Giras y Transporte:</strong> Optimización de rutas, transporte de bajo carbono (tren, vehículos eléctricos) y compensación de vuelos.</li>
+            <li><strong>Producción de Eventos:</strong> Gestión de residuos, uso de energías renovables, ahorro de agua y catering sostenible.</li>
+            <li><strong>Merchandising y Productos:</strong> Materiales sostenibles (algodón orgánico, reciclados), producción local y diseño para la durabilidad.</li>
+            <li><strong>Estudios y Oficinas Ecoeficientes:</strong> Eficiencia energética, equipos de bajo consumo y gestión de residuos.</li>
+            <li><strong>Educación y Certificaciones:</strong> Talleres especializados, campañas de concienciación y estándares de neutralidad de carbono.</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2><span class="num">5.</span>Medición de Impacto y Próximos Pasos</h2>
+        <h3>Indicadores Clave (KPIs · Año 1)</h3>
+        <div class="kpi-row">
+            <div class="kpi"><div class="big">+100</div><div class="desc">artistas y eventos asesorados</div></div>
+            <div class="kpi"><div class="big gold">+15 t</div><div class="desc">CO₂e proyectadas a reducir</div></div>
+            <div class="kpi"><div class="big">+500</div><div class="desc">músicos y profesionales alcanzados</div></div>
+        </div>
+        <h3>Hoja de Ruta / Próximos Pasos</h3>
+        <ol>
+            <li>Definición oficial del nombre y consolidación de la identidad de la ONG (<strong>Happy Beat CL</strong>).</li>
+            <li>Constitución legal formal de la organización.</li>
+            <li>Reclutamiento y formación del equipo fundador.</li>
+            <li>Desarrollo del plan estratégico detallado y canales digitales.</li>
+            <li>Lanzamiento de un proyecto piloto inicial para demostrar impacto.</li>
+        </ol>
+    </section>
+
+    <div class="doc-footer">
+        Documento generado para la ONG Happy Beat CL · Revolución Sonora Sostenible © 2026
+        <div class="links">happybeat-cl.netlify.app · @happybeatcl</div>
+    </div>
+
+</body>
+</html>
