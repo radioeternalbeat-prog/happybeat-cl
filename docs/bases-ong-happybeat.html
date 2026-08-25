@@ -4,181 +4,237 @@
 <meta charset="UTF-8">
 <title>Happy Beat CL — Bases de la ONG</title>
 <style>
+    /* ===== Tokens de marca Happy Beat CL ===== */
+    :root {
+        --forest-950: #05140b;
+        --forest-900: #0a2616;
+        --forest-800: #123e24;
+        --mint-500: #11d442;
+        --mint-400: #25f46a;
+        --mint-700: #0f8f30;
+        --beatcoin: #f4d125;
+        --beatcoin-dark: #b8860b;
+        --papaya-500: #ff8000;
+        --volt: #c8a800;
+        --ink: #17231c;
+        --muted: #5b6b62;
+    }
     @page {
         size: A4;
-        margin: 20mm 18mm 18mm 18mm;
-        @bottom-center { content: counter(page); }
+        margin: 18mm 16mm 16mm 16mm;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-        font-family: 'Noto Sans', 'Segoe UI', Arial, sans-serif;
-        color: #1e2a24;
-        font-size: 10.8pt;
-        line-height: 1.5;
+        /* Noto Sans imita a Plus Jakarta Sans (misma familia humanista);
+           es la fuente disponible offline mas cercana a la marca. */
+        font-family: 'Noto Sans', 'Noto Color Emoji', sans-serif;
+        color: var(--ink);
+        font-size: 10.6pt;
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
     }
-    /* --- Portada / encabezado --- */
+    strong, b { font-weight: 700; }
+    .black { font-weight: 800; }
+
+    /* ===== Portada ===== */
     .cover {
         text-align: center;
-        padding: 8px 0 22px;
-        border-bottom: 3px solid #11d442;
+        padding: 6px 0 24px;
         margin-bottom: 26px;
         position: relative;
+        border-bottom: 3px solid var(--mint-500);
     }
     .cover .logo {
-        width: 120px; height: 120px;
-        object-fit: contain;
-        border-radius: 50%;
-        margin: 0 auto 14px;
-        display: block;
-        box-shadow: 0 4px 18px rgba(244,209,37,0.35);
+        width: 128px; height: 128px;
+        object-fit: contain; border-radius: 50%;
+        margin: 0 auto 16px; display: block;
+        box-shadow: 0 6px 22px rgba(244,209,37,0.4);
     }
     .cover h1 {
-        font-size: 30pt;
-        font-weight: 800;
-        color: #0a2616;
-        letter-spacing: -0.5px;
+        font-size: 32pt; font-weight: 800;
+        color: var(--forest-900); letter-spacing: -0.8px; line-height: 1;
     }
-    .cover .brand-cl { color: #11d442; }
+    .cover h1 .cl { color: var(--mint-500); }
     .cover .subtitle {
-        font-size: 13pt;
-        color: #16a34a;
-        font-weight: 600;
-        margin-top: 6px;
+        font-size: 13pt; color: var(--mint-700);
+        font-weight: 700; margin-top: 8px;
+    }
+    .cover .slogan {
+        font-size: 11pt; color: var(--muted);
+        font-style: italic; margin-top: 10px;
     }
     .cover .tagline {
-        display: inline-block;
-        margin-top: 12px;
-        font-size: 8.5pt;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        color: #b8860b;
-        background: rgba(244,209,37,0.12);
-        border: 1px solid rgba(244,209,37,0.4);
-        border-radius: 999px;
-        padding: 5px 16px;
+        display: inline-block; margin-top: 14px;
+        font-size: 8.5pt; font-weight: 800;
+        text-transform: uppercase; letter-spacing: 2.5px;
+        color: var(--beatcoin-dark);
+        background: rgba(244,209,37,0.14);
+        border: 1px solid rgba(244,209,37,0.5);
+        border-radius: 999px; padding: 5px 18px;
     }
-    /* --- Secciones --- */
+
+    /* ===== Secciones ===== */
     section { margin-bottom: 20px; page-break-inside: avoid; }
     h2 {
-        font-size: 14pt;
-        font-weight: 800;
-        color: #0a2616;
-        padding: 7px 0 7px 14px;
-        border-left: 5px solid #11d442;
-        background: linear-gradient(90deg, rgba(17,212,66,0.08), transparent 70%);
-        margin-bottom: 12px;
-        border-radius: 0 6px 6px 0;
+        font-size: 14.5pt; font-weight: 800;
+        color: var(--forest-900);
+        padding: 8px 0 8px 14px;
+        border-left: 5px solid var(--mint-500);
+        background: linear-gradient(90deg, rgba(17,212,66,0.10), transparent 75%);
+        margin-bottom: 13px; border-radius: 0 6px 6px 0;
     }
-    h2 .num {
-        display: inline-block;
-        color: #11d442;
-        font-weight: 800;
-        margin-right: 8px;
-    }
+    h2 .num { color: var(--mint-500); font-weight: 800; margin-right: 8px; }
     h3 {
-        font-size: 11pt;
-        font-weight: 700;
-        color: #15803d;
-        margin: 14px 0 8px;
+        font-size: 11pt; font-weight: 800; color: var(--mint-700);
+        margin: 15px 0 9px;
     }
     p { margin-bottom: 8px; }
-    ul, ol { margin: 4px 0 8px 4px; padding-left: 20px; }
-    li { margin-bottom: 6px; }
-    li strong, p strong { color: #0a2616; font-weight: 700; }
-    /* Vision/Mision destacadas */
+    p strong, li strong { color: var(--forest-900); }
+
+    /* Tarjetas Visión / Misión */
+    .duo { display: flex; gap: 12px; }
+    .duo .highlight-card { flex: 1; }
     .highlight-card {
         background: #f0fdf4;
-        border: 1px solid rgba(17,212,66,0.25);
-        border-radius: 10px;
-        padding: 12px 16px;
-        margin-bottom: 10px;
+        border: 1px solid rgba(17,212,66,0.3);
+        border-left: 4px solid var(--mint-500);
+        border-radius: 10px; padding: 13px 16px; margin-bottom: 10px;
+    }
+    .highlight-card.gold {
+        background: #fffdf2;
+        border-color: rgba(244,209,37,0.45);
+        border-left-color: var(--beatcoin);
     }
     .highlight-card .label {
-        font-weight: 800; color: #11d442;
-        text-transform: uppercase; letter-spacing: 1px;
-        font-size: 9pt; display: block; margin-bottom: 4px;
+        font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+        font-size: 9pt; display: block; margin-bottom: 5px; color: var(--mint-700);
     }
+    .highlight-card.gold .label { color: var(--beatcoin-dark); }
+
+    /* Listas con marcador de marca (círculo mint) */
+    ul.iconed { list-style: none; }
+    ul.iconed li {
+        position: relative; padding-left: 22px; margin-bottom: 9px;
+    }
+    ul.iconed li::before {
+        content: ""; position: absolute; left: 2px; top: 6px;
+        width: 9px; height: 9px; border-radius: 50%;
+        background: var(--mint-500);
+        box-shadow: 0 0 0 3px rgba(17,212,66,0.15);
+    }
+    ol { padding-left: 22px; }
+    ol li { margin-bottom: 7px; }
+    ol li::marker { color: var(--mint-500); font-weight: 800; }
+
+    /* Grid Público (chips) */
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip {
+        flex: 1 1 30%; min-width: 30%;
+        background: #f7faf8; border: 1px solid #e2ece6;
+        border-radius: 10px; padding: 10px 12px;
+    }
+    .chip .t { font-weight: 800; color: var(--forest-900); font-size: 9.8pt; }
+    .chip .d { font-size: 8.3pt; color: var(--muted); margin-top: 2px; }
+
     /* KPIs */
-    .kpi-row {
-        display: flex; gap: 12px; margin: 10px 0 16px;
-    }
+    .kpi-row { display: flex; gap: 12px; margin: 10px 0 16px; }
     .kpi {
-        flex: 1; text-align: center;
-        background: #05140b;
-        color: #fff;
-        border-radius: 12px;
-        padding: 16px 8px;
-        border: 1px solid rgba(244,209,37,0.3);
+        flex: 1; text-align: center; background: var(--forest-950);
+        color: #fff; border-radius: 12px; padding: 16px 8px;
+        border: 1px solid rgba(244,209,37,0.35);
     }
-    .kpi .big { font-size: 22pt; font-weight: 800; color: #25f46a; line-height: 1; }
-    .kpi .big.gold { color: #f4d125; }
+    .kpi .big { font-size: 23pt; font-weight: 800; color: var(--mint-400); line-height: 1; }
+    .kpi .big.gold { color: var(--beatcoin); }
     .kpi .desc { font-size: 8pt; color: #cbd5cf; margin-top: 6px; }
-    /* Footer del documento */
-    .doc-footer {
-        margin-top: 28px;
-        padding-top: 14px;
-        border-top: 1px solid #d1d5db;
-        text-align: center;
-        font-size: 8.5pt;
-        color: #6b7280;
-        font-style: italic;
+
+    /* Radio box */
+    .radio-box {
+        background: var(--forest-950); color: #fff;
+        border-radius: 12px; padding: 16px 20px;
+        border: 1px solid rgba(255,128,0,0.4);
+        display: flex; align-items: center; gap: 16px;
     }
-    .doc-footer .links { margin-top: 6px; font-style: normal; color: #16a34a; font-weight: 600; }
+    .radio-box .rlogo {
+        width: 62px; height: 62px; border-radius: 50%; object-fit: cover;
+        border: 2px solid rgba(255,128,0,0.5); flex-shrink: 0;
+    }
+    .radio-box .rname { font-weight: 800; color: var(--mint-400); font-size: 12pt; letter-spacing: 1px; text-transform: uppercase; }
+    .radio-box .rsub { font-size: 8.5pt; color: var(--beatcoin); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin: 3px 0; }
+    .radio-box .rdesc { font-size: 9pt; color: #cbd5cf; }
+
+    /* Contacto */
+    .contact-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+    .contact-item {
+        flex: 1 1 30%; background: #f7faf8; border: 1px solid #e2ece6;
+        border-radius: 10px; padding: 9px 12px; font-size: 9pt;
+    }
+    .contact-item .cl { display: block; font-weight: 800; color: var(--mint-700); font-size: 8pt; text-transform: uppercase; letter-spacing: 0.5px; padding-left: 12px; position: relative; }
+    .contact-item .cl::before { content: ""; position: absolute; left: 0; top: 3px; width: 6px; height: 6px; border-radius: 50%; background: var(--mint-500); }
+    .contact-item .cv { color: var(--ink); word-break: break-all; }
+
+    /* Footer */
+    .doc-footer {
+        margin-top: 26px; padding-top: 14px; border-top: 1px solid #d9e0dc;
+        text-align: center; font-size: 8.5pt; color: var(--muted); font-style: italic;
+    }
+    .doc-footer .links { margin-top: 6px; font-style: normal; color: var(--mint-700); font-weight: 700; }
 </style>
 </head>
 <body>
 
     <div class="cover">
         <img class="logo" src="../logo.png" alt="Happy Beat CL">
-        <h1>Happy Beat <span class="brand-cl">CL</span></h1>
+        <h1>Happy Beat <span class="cl">CL</span></h1>
         <div class="subtitle">Bases para una ONG de Huella de Carbono en la Música</div>
+        <div class="slogan">«La música vibra fuerte, el planeta también debe hacerlo.»</div>
         <div class="tagline">Rhythm for a Greener Tomorrow · Ruta Cero</div>
     </div>
 
     <section>
         <h2><span class="num">1.</span>Visión y Misión</h2>
-        <div class="highlight-card">
-            <span class="label">Visión</span>
-            Ser la organización líder en la promoción y facilitación de prácticas sostenibles en la industria musical, logrando una reducción significativa de su huella de carbono y fomentando una cultura de responsabilidad ambiental a nivel global.
-        </div>
-        <div class="highlight-card">
-            <span class="label">Misión</span>
-            Impulsar la transición de la industria musical hacia operaciones de bajo carbono a través de la educación, la colaboración, la investigación y el desarrollo de herramientas y estándares que permitan a artistas, sellos, promotores y venues medir, reducir y compensar su impacto ambiental.
+        <div class="duo">
+            <div class="highlight-card">
+                <span class="label">Visión</span>
+                Ser la organización líder en la promoción y facilitación de prácticas sostenibles en la industria musical, logrando una reducción significativa de su huella de carbono y fomentando una cultura de responsabilidad ambiental a nivel global.
+            </div>
+            <div class="highlight-card gold">
+                <span class="label">Misión</span>
+                Impulsar la transición de la industria musical hacia operaciones de bajo carbono a través de la educación, la colaboración, la investigación y el desarrollo de herramientas y estándares que permitan a artistas, sellos, promotores y venues medir, reducir y compensar su impacto ambiental.
+            </div>
         </div>
     </section>
 
     <section>
         <h2><span class="num">2.</span>Objetivos Estratégicos</h2>
-        <ul>
+        <ul class="iconed">
             <li><strong>Educar y Concienciar:</strong> Aumentar el conocimiento sobre la huella de carbono en la música y las soluciones disponibles entre todos los actores de la industria.</li>
             <li><strong>Facilitar la Medición:</strong> Desarrollar o adaptar herramientas accesibles para que artistas, eventos y empresas musicales puedan calcular su impacto ambiental.</li>
             <li><strong>Promover la Reducción:</strong> Identificar y difundir mejores prácticas para disminuir las emisiones en giras, producción de eventos, merchandising y consumo energético.</li>
-            <li><strong>Fomentar la Colaboración:</strong> Crear redes y alianzas entre profesionales de la música, expertos en sostenibilidad y organizaciones.</li>
-            <li><strong>Influir en Políticas:</strong> Abogar por la implementación de políticas y regulaciones que incentiven la sostenibilidad en el sector musical.</li>
-            <li><strong>Innovar y Desarrollar:</strong> Investigar nuevas tecnologías y soluciones para la reducción de emisiones y la economía circular.</li>
+            <li><strong>Fomentar la Colaboración:</strong> Crear redes y alianzas estratégicas entre profesionales de la música, expertos en sostenibilidad y organizaciones ambientales.</li>
+            <li><strong>Influir en Políticas:</strong> Abogar por la implementación de políticas públicas y regulaciones que incentiven activamente la sostenibilidad en el sector musical.</li>
+            <li><strong>Innovar y Desarrollar:</strong> Investigar nuevas tecnologías y soluciones para la reducción de emisiones y el fomento de la economía circular.</li>
         </ul>
     </section>
 
     <section>
         <h2><span class="num">3.</span>Público Objetivo</h2>
-        <ul>
-            <li><strong>Artistas y Bandas:</strong> Desde emergentes hasta consolidados.</li>
-            <li><strong>Sellos Discográficos:</strong> Independientes y majors.</li>
-            <li><strong>Promotores de Eventos y Festivales:</strong> Organizadores de conciertos y grandes eventos.</li>
-            <li><strong>Venues y Espacios de Música:</strong> Clubes, teatros, estadios y salas de ensayo.</li>
-            <li><strong>Proveedores de Servicios y Audiencia:</strong> Empresas de sonido, iluminación, transporte, catering, merchandising y fans.</li>
-        </ul>
+        <div class="chips">
+            <div class="chip"><div class="t">Artistas y Bandas</div><div class="d">Desde emergentes hasta proyectos consagrados y giras internacionales.</div></div>
+            <div class="chip"><div class="t">Sellos Discográficos</div><div class="d">Sellos independientes y major labels comprometidos con el cambio.</div></div>
+            <div class="chip"><div class="t">Promotores y Festivales</div><div class="d">Organizadores de conciertos, festivales y eventos masivos en vivo.</div></div>
+            <div class="chip"><div class="t">Venues y Salas</div><div class="d">Clubes, teatros, estadios y salas de ensayo eco-eficientes.</div></div>
+            <div class="chip"><div class="t">Proveedores &amp; Fans</div><div class="d">Empresas de sonido, catering, merchandising y la comunidad de fans.</div></div>
+        </div>
     </section>
 
     <section>
         <h2><span class="num">4.</span>Áreas de Acción Clave</h2>
-        <ul>
-            <li><strong>Giras y Transporte:</strong> Optimización de rutas, transporte de bajo carbono (tren, vehículos eléctricos) y compensación de vuelos.</li>
-            <li><strong>Producción de Eventos:</strong> Gestión de residuos, uso de energías renovables, ahorro de agua y catering sostenible.</li>
-            <li><strong>Merchandising y Productos:</strong> Materiales sostenibles (algodón orgánico, reciclados), producción local y diseño para la durabilidad.</li>
-            <li><strong>Estudios y Oficinas Ecoeficientes:</strong> Eficiencia energética, equipos de bajo consumo y gestión de residuos.</li>
-            <li><strong>Educación y Certificaciones:</strong> Talleres especializados, campañas de concienciación y estándares de neutralidad de carbono.</li>
+        <ul class="iconed">
+            <li><strong>Giras y Transporte:</strong> Optimización de rutas de tour, uso de transporte de bajo carbono (tren, vehículos eléctricos, movilidad compartida) y planes de compensación de vuelos.</li>
+            <li><strong>Producción de Eventos:</strong> Gestión integral de residuos, uso exclusivo de energías renovables (solar/baterías), ahorro de agua y oferta gastronómica y catering sostenible.</li>
+            <li><strong>Merchandising y Productos:</strong> Materiales textiles y de empaque sostenibles (algodón orgánico, materiales reciclados), producción local de cercanía y diseño pensado para la durabilidad.</li>
+            <li><strong>Estudios y Oficinas Ecoeficientes:</strong> Eficiencia energética en estudios de grabación y oficinas, incorporación de equipos de bajo consumo y gestión rigurosa de residuos de equipamiento.</li>
+            <li><strong>Educación y Certificaciones:</strong> Talleres de formación especializada, campañas masivas de concienciación pública y creación de un sello de certificación de neutralidad de carbono para eventos y lanzamientos musicales.</li>
         </ul>
     </section>
 
@@ -194,15 +250,39 @@
         <ol>
             <li>Definición oficial del nombre y consolidación de la identidad de la ONG (<strong>Happy Beat CL</strong>).</li>
             <li>Constitución legal formal de la organización.</li>
-            <li>Reclutamiento y formación del equipo fundador.</li>
-            <li>Desarrollo del plan estratégico detallado y canales digitales.</li>
-            <li>Lanzamiento de un proyecto piloto inicial para demostrar impacto.</li>
+            <li>Reclutamiento y formación del equipo fundador y comité asesor.</li>
+            <li>Desarrollo del plan estratégico detallado y puesta en marcha de canales digitales.</li>
+            <li>Lanzamiento de un proyecto piloto inicial para demostrar un impacto medible y real.</li>
         </ol>
+    </section>
+
+    <section>
+        <h2><span class="num">6.</span>Happy Harmony · EternalBeat Radio</h2>
+        <div class="radio-box">
+            <img class="rlogo" src="../radio-logo.png" alt="EternalBeat Radio">
+            <div>
+                <div class="rname">EternalBeat Radio</div>
+                <div class="rsub">En colaboración con la ONG Happy Beat CL</div>
+                <div class="rdesc">Señal en vivo con música consciente que sincroniza el ritmo con el latido del planeta. Un canal de difusión propio para amplificar el mensaje de sostenibilidad y llegar a artistas, público y aliados. Disponible desde la app y la web, sin necesidad de registro.</div>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2><span class="num">7.</span>Contacto y Canales Oficiales</h2>
+        <div class="contact-grid">
+            <div class="contact-item"><span class="cl">Sitio web / App</span><span class="cv">happybeat-cl.netlify.app</span></div>
+            <div class="contact-item"><span class="cl">WhatsApp</span><span class="cv">wa.me/56939010237</span></div>
+            <div class="contact-item"><span class="cl">Instagram</span><span class="cv">@happybeatcl</span></div>
+            <div class="contact-item"><span class="cl">YouTube</span><span class="cv">@HappyBeatCL</span></div>
+            <div class="contact-item"><span class="cl">Facebook</span><span class="cv">Happy Beat CL</span></div>
+            <div class="contact-item"><span class="cl">Spotify</span><span class="cv">Happy Beat CL</span></div>
+        </div>
     </section>
 
     <div class="doc-footer">
         Documento generado para la ONG Happy Beat CL · Revolución Sonora Sostenible © 2026
-        <div class="links">happybeat-cl.netlify.app · @happybeatcl</div>
+        <div class="links">happybeat-cl.netlify.app · @happybeatcl · Rhythm for a Greener Tomorrow</div>
     </div>
 
 </body>
