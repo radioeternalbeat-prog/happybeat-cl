@@ -9,6 +9,12 @@
   to = "/app.html"
   status = 200
 
+# URL limpia para la pagina de enlaces (linktree): /links sirve /links.html
+[[redirects]]
+  from = "/links"
+  to = "/links.html"
+  status = 200
+
 # Compatibilidad hacia atras: cualquiera que tuviera guardado el link
 # viejo de la landing (/landing o /landing.html) va a la raiz.
 [[redirects]]
