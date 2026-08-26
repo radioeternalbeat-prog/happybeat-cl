@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Happy Beat CL — Enlaces</title>
+  <meta name="description" content="Todos los enlaces de Happy Beat CL en un solo lugar. Rhythm for a Greener Tomorrow." />
+  <link rel="icon" href="/logo.png" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Color+Emoji&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS v4 (CDN) -->
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      --font-sans: 'Plus Jakarta Sans', 'Noto Color Emoji', sans-serif;
+
+      --color-forest-950: #05140b;
+      --color-forest-900: #0a2616;
+      --color-forest-800: #123e24;
+
+      --color-mint-500: #11d442;
+      --color-mint-400: #25f46a;
+
+      --color-beatcoin: #f4d125;
+
+      --color-papaya-500: #ff8000;
+      --color-papaya-400: #ff9933;
+      --color-volt-400: #e1ff00;
+
+      --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.37);
+
+      --animate-float: float 4s ease-in-out infinite;
+      --animate-glow-pulse: glow-pulse 3s ease-in-out infinite;
+
+      @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+      }
+      @keyframes glow-pulse {
+        0%, 100% { box-shadow: 0 0 20px rgba(244, 209, 37, 0.35); }
+        50% { box-shadow: 0 0 35px rgba(244, 209, 37, 0.6); }
+      }
+    }
+
+    @layer base {
+      body {
+        background-color: var(--color-forest-950);
+        background-image:
+          radial-gradient(circle at 85% 8%, rgba(17, 212, 66, 0.10), transparent 45%),
+          radial-gradient(circle at 12% 92%, rgba(244, 209, 37, 0.05), transparent 40%),
+          radial-gradient(circle at 50% 100%, rgba(255, 128, 0, 0.045), transparent 45%);
+        background-attachment: fixed;
+        font-family: var(--font-sans);
+      }
+    }
+
+    @layer components {
+      .glass-card {
+        background-color: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        border-radius: 1.5rem;
+        box-shadow: var(--shadow-glass);
+      }
+      .link-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+      }
+      .link-card:hover {
+        transform: translateY(-3px);
+        background-color: rgba(255, 255, 255, 0.09);
+        box-shadow: 0 0 25px rgba(17, 212, 66, 0.20);
+      }
+      .link-card:active { transform: scale(0.98); }
+      .btn-primary {
+        background-color: var(--color-mint-500);
+        color: var(--color-forest-950);
+        box-shadow: 0 0 20px rgba(17, 212, 66, 0.35);
+        transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+      }
+      .btn-primary:hover {
+        background-color: var(--color-mint-400);
+        box-shadow: 0 0 30px rgba(17, 212, 66, 0.5);
+        transform: translateY(-3px);
+      }
+      .btn-primary:active { transform: scale(0.98); }
+    }
+  </style>
+</head>
+
+<body class="min-h-screen text-white antialiased">
+  <main class="mx-auto flex min-h-screen w-full max-w-md flex-col items-center px-6 py-12">
+
+    <!-- Logo -->
+    <img
+      src="/logo.png"
+      alt="Happy Beat CL"
+      class="h-28 w-28 rounded-full object-cover animate-float"
+      style="filter: drop-shadow(0 0 18px rgba(244, 209, 37, 0.45));"
+    />
+
+    <!-- Título -->
+    <h1 class="mt-6 text-center text-3xl font-black tracking-tight">
+      Happy Beat <span class="text-mint-400">CL</span>
+    </h1>
+    <p class="mt-2 text-center text-sm font-medium text-beatcoin">
+      Rhythm for a Greener Tomorrow
+    </p>
+    <p class="mt-1 text-center text-xs text-white/50">Ruta Cero 🌱</p>
+
+    <!-- Enlaces -->
+    <div class="mt-10 flex w-full flex-col gap-4">
+
+      <!-- Destacado: App -->
+      <a
+        href="https://happybeat-cl.netlify.app/"
+        target="_blank" rel="noopener"
+        class="btn-primary flex items-center justify-center gap-3 rounded-2xl px-6 py-4 font-bold"
+      >
+        <span class="text-xl">🎵</span>
+        <span>Abrir la App Happy Beat</span>
+      </a>
+
+      <!-- WhatsApp -->
+      <a
+        href="https://wa.me/56939010237?text=%C2%A1Hola%20Happy%20Beat%20CL!%20%F0%9F%8E%B5%20Quiero%20saber%20m%C3%A1s%20sobre%20la%20app%20y%20la%20Ruta%20Cero%20%F0%9F%8C%B1"
+        target="_blank" rel="noopener"
+        class="link-card glass-card flex items-center gap-4 px-5 py-4"
+      >
+        <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-mint-500/15 text-xl">💬</span>
+        <span class="flex flex-col">
+          <span class="font-bold">WhatsApp</span>
+          <span class="text-xs text-white/50">Escríbenos: +56 9 3901 0237</span>
+        </span>
+        <span class="ml-auto text-white/30">↗</span>
+      </a>
+
+      <!-- Instagram -->
+      <a
+        href="https://www.instagram.com/happybeatcl"
+        target="_blank" rel="noopener"
+        class="link-card glass-card flex items-center gap-4 px-5 py-4"
+      >
+        <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-papaya-500/15 text-xl">📸</span>
+        <span class="flex flex-col">
+          <span class="font-bold">Instagram</span>
+          <span class="text-xs text-white/50">@happybeatcl</span>
+        </span>
+        <span class="ml-auto text-white/30">↗</span>
+      </a>
+
+      <!-- Facebook -->
+      <a
+        href="https://www.facebook.com/share/1DDV2eru7x/?mibextid=wwXIfr"
+        target="_blank" rel="noopener"
+        class="link-card glass-card flex items-center gap-4 px-5 py-4"
+      >
+        <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-mint-500/15 text-xl">👍</span>
+        <span class="flex flex-col">
+          <span class="font-bold">Facebook</span>
+          <span class="text-xs text-white/50">Happy Beat CL</span>
+        </span>
+        <span class="ml-auto text-white/30">↗</span>
+      </a>
+
+      <!-- YouTube -->
+      <a
+        href="https://youtube.com/@happybeatcl"
+        target="_blank" rel="noopener"
+        class="link-card glass-card flex items-center gap-4 px-5 py-4"
+      >
+        <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-papaya-400/15 text-xl">▶️</span>
+        <span class="flex flex-col">
+          <span class="font-bold">YouTube</span>
+          <span class="text-xs text-white/50">@happybeatcl</span>
+        </span>
+        <span class="ml-auto text-white/30">↗</span>
+      </a>
+
+      <!-- Spotify -->
+      <a
+        href="https://open.spotify.com/user/317lffua37ci3sjnyflzynkwomua"
+        target="_blank" rel="noopener"
+        class="link-card glass-card flex items-center gap-4 px-5 py-4"
+      >
+        <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-mint-500/15 text-xl">🎧</span>
+        <span class="flex flex-col">
+          <span class="font-bold">Spotify</span>
+          <span class="text-xs text-white/50">Nuestras playlists</span>
+        </span>
+        <span class="ml-auto text-white/30">↗</span>
+      </a>
+
+      <!-- Sitio / Radio -->
+      <a
+        href="https://happybeat-cl.netlify.app/"
+        target="_blank" rel="noopener"
+        class="link-card glass-card flex items-center gap-4 px-5 py-4"
+      >
+        <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-beatcoin/15 text-xl">📻</span>
+        <span class="flex flex-col">
+          <span class="font-bold">Sitio web</span>
+          <span class="text-xs text-white/50">happybeat-cl.netlify.app</span>
+        </span>
+        <span class="ml-auto text-white/30">↗</span>
+      </a>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-auto pt-12 text-center">
+      <p class="text-xs text-white/40">
+        © <span id="year"></span> Happy Beat CL · Eternal Beat Medios CL
+      </p>
+    </footer>
+  </main>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
