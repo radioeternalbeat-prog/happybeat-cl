@@ -12,3 +12,9 @@
 
 /
   Cache-Control: no-cache
+
+/links
+  Cache-Control: no-cache
+
+/links.html
+  Cache-Control: no-cache
